@@ -1,6 +1,8 @@
 import typing
 from contextlib import contextmanager
 
+MIN_PRICE = 10
+HIGH_PRICE = 90
 
 class Platform:
     def __init__(self):
@@ -84,10 +86,17 @@ class Position:
             cost = abs(self.amount) * ask
         return win - cost
 
+    def risk(self):
+        if self.amount > 0:
+            return self.amount * ( self.price - MIN_PRICE )
+        else:
+            return self.amount * ( HIGH_PRICE - self.price )
+
     def margin(self):
         ask, bid = self.platform.market_ask, self.platform.market_bid
         value = abs(self.amount) * (bid + ask) / 2
         return self.MARGIN_REQ * value
+
 
     def __repr__(self):
         return f"Position {self.id} ({self.amount=})"
@@ -115,6 +124,12 @@ class Account:
             self.balance + self.profit(mode) - self.margin()
             for mode in ["low", "high", "market"]
         )
+
+    def risk(self):
+        return sum(p.risk() for p in self.positions)
+
+    def asset(self):
+        return sum(p.amount for p in self.positions)
 
     def open(self, amt, limit = None, stop = None) -> Position:
         pos = Position(amt, self.pform, limit=limit, stop=stop)

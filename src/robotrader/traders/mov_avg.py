@@ -8,35 +8,39 @@ class MovingAvgTrader(RoboTrader):
         super().__init__(platform)
 
     def decide_actions(self):
-        future_price = self.price_avg.value + self.price_momentum.value * 10
+        if self.account.risk() > self.account.balance:
+            return
+
+        future_price = self.price_avg.value + self.price_momentum.value
         delta = price(self.platform) - future_price
         self.history['delta'].append(delta)
+        self.history['neg_day_dev'].append(-self.day_dev.value)
+        self.history['neg_week_dev'].append(-self.week_dev.value)
 
-        # if abs(delta) > self.day_dev.value:
-        #     if delta < 0:
-        #         amount = delta * delta * 20
-        #         try:
-        #             self.account.open(
-        #                 amount,
-        #                 limit=self.price_avg.value
-        #                 + 0.08
-        #                 + self.day_dev.value
-        #                 + self.price_momentum.value,
-        #             )
-        #         except InsufficientFundsException:
-        #             pass
+        if abs(delta) > self.day_dev.value:
+            if delta < 0:
+                amount = 5
+                try:
+                    self.account.open(
+                        amount,
+                        limit=self.price_avg.value
+                        + 0.08
+                        + self.day_dev.value
+                        + self.price_momentum.value,
+                    )
+                except InsufficientFundsException:
+                    pass
 
-            # else:
-            #     amount = delta * delta * -40
-            #
-            #     try:
-            #         self.account.open(
-            #             amount,
-            #             limit=price(self.platform)
-            #             - 0.16
-            #             - self.day_variance.value
-            #             + self.price_momentum.value,
-            #         )
-            #     except InsufficientFundsException:
-            #         pass
+            else:
+                amount = -5
+                try:
+                    self.account.open(
+                        amount,
+                        limit=price(self.platform)
+                        - 0.8
+                        - self.day_dev.value
+                        + self.price_momentum.value,
+                    )
+                except InsufficientFundsException:
+                    pass
 

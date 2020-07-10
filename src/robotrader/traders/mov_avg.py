@@ -4,8 +4,8 @@ from src.robotrader.robotrader import RoboTrader
 
 
 class MovingAvgTrader(RoboTrader):
-    def __init__(self, platform):
-        super().__init__(platform)
+    def __init__(self, platform, balance, steps_per_day):
+        super().__init__(platform, balance, steps_per_day)
 
     def decide_actions(self):
         if self.account.risk() > self.account.balance:

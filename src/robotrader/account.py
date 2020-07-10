@@ -9,7 +9,7 @@ INTEREST_SHORT = 1 / 4000
 
 
 class Platform:
-    def __init__(self):
+    def __init__(self, delta):
         self.high_bid = None
         self.high_ask = None
 
@@ -18,21 +18,19 @@ class Platform:
 
         self.market_ask = None
         self.market_bid = None
-        self.delta = None
+        self.delta = delta
         self.step = 0
 
-    def set_prices(self, *, low_bid, low_ask, high_bid, high_ask):
-        assert low_ask >= low_bid
-        assert high_ask >= high_bid
-        self.low_ask = low_ask
-        self.low_bid = low_bid
-        self.delta = low_ask - low_bid
+    def set_prices(self, low, high):
+        assert low <= high
+        self.low_ask = low + self.delta / 2
+        self.low_bid = low - self.delta / 2
 
-        self.high_ask = high_ask
-        self.high_bid = high_bid
+        self.high_ask = high + self.delta / 2
+        self.high_bid = high - self.delta / 2
 
-        self.market_bid = (high_bid + low_bid) / 2
-        self.market_ask = (high_ask + low_ask) / 2
+        self.market_bid = (self.high_bid + self.low_bid) / 2
+        self.market_ask = (self.high_ask + self.low_ask) / 2
         self.step += 1
 
     @contextmanager

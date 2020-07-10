@@ -1,13 +1,6 @@
 import pytest
 
-from src.robotrader.account import Platform, Account
-
-
-@pytest.fixture()
-def platform():
-    p = Platform()
-    p.set_prices(low_bid=10, low_ask=11, high_bid=11, high_ask=12)
-    yield p
+from src.robotrader.account import Account
 
 
 @pytest.mark.parametrize("amount", [-50, 50])
@@ -29,7 +22,7 @@ def test_ensure_margin_long(platform):
     pos = a.open(1000)
     assert len(a.positions) == 1
 
-    platform.set_prices(low_bid=1, low_ask=2, high_bid=2, high_ask=3)
+    platform.set_prices(low=1, high=3)
     a.step()
     assert len(a.positions) == 0
 
@@ -40,7 +33,7 @@ def test_ensure_margin_short(platform):
     pos = a.open(-1000)
     assert len(a.positions) == 1
 
-    platform.set_prices(low_bid=21, low_ask=22, high_bid=22, high_ask=23)
+    platform.set_prices(low=21, high=23)
     a.step()
     assert len(a.positions) == 0
 
@@ -51,7 +44,7 @@ def test_hit_limit_long(platform):
     pos = a.open(1000, limit=15)
     assert len(a.positions) == 1
 
-    platform.set_prices(low_bid=9, low_ask=10, high_bid=16, high_ask=17)
+    platform.set_prices(low=10, high=16)
     a.step()
     assert len(a.positions) == 0
     assert a.balance > balance_init
@@ -63,7 +56,7 @@ def test_miss_limit_long(platform):
     pos = a.open(1000, limit=15)
     assert len(a.positions) == 1
 
-    platform.set_prices(low_bid=9, low_ask=10, high_bid=14, high_ask=15.1)
+    platform.set_prices(low=10, high=15)
     a.step()
     assert len(a.positions) == 1
     assert a.balance == balance_init
@@ -75,7 +68,7 @@ def test_hit_stop_long(platform):
     pos = a.open(1000, stop=8)
     assert len(a.positions) == 1
 
-    platform.set_prices(low_bid=7, low_ask=8, high_bid=22, high_ask=23)
+    platform.set_prices(low=7, high=22)
     a.step()
     assert len(a.positions) == 0
     assert a.balance < balance_init
@@ -87,7 +80,7 @@ def test_miss_stop_long(platform):
     pos = a.open(1000, stop=8)
     assert len(a.positions) == 1
 
-    platform.set_prices(low_bid=9, low_ask=10, high_bid=10, high_ask=11)
+    platform.set_prices(low=10, high=11)
     a.step()
     assert len(a.positions) == 1
     assert a.balance == balance_init
@@ -99,7 +92,7 @@ def test_hit_limit_short(platform):
     pos = a.open(-1000, limit=5)
     assert len(a.positions) == 1
 
-    platform.set_prices(low_bid=4, low_ask=5, high_bid=16, high_ask=17)
+    platform.set_prices(low=4, high=16)
     a.step()
     assert len(a.positions) == 0
     assert a.balance > balance_init
@@ -111,7 +104,7 @@ def test_miss_limit_short(platform):
     pos = a.open(-1000, limit=5)
     assert len(a.positions) == 1
 
-    platform.set_prices(low_bid=6, low_ask=7, high_bid=14, high_ask=15.1)
+    platform.set_prices(low=7, high=14)
     a.step()
     assert len(a.positions) == 1
     assert a.balance == balance_init
@@ -123,7 +116,7 @@ def test_hit_stop_short(platform):
     pos = a.open(-1000, stop=15)
     assert len(a.positions) == 1
 
-    platform.set_prices(low_bid=7, low_ask=8, high_bid=22, high_ask=23)
+    platform.set_prices(low=7, high=16)
     a.step()
     assert len(a.positions) == 0
     assert a.balance < balance_init
@@ -135,7 +128,7 @@ def test_miss_stop_short(platform):
     pos = a.open(-1000, stop=15)
     assert len(a.positions) == 1
 
-    platform.set_prices(low_bid=9, low_ask=10, high_bid=13, high_ask=14)
+    platform.set_prices(9,14)
     a.step()
     assert len(a.positions) == 1
     assert a.balance == balance_init

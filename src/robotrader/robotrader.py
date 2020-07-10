@@ -8,8 +8,8 @@ from src.robotrader.features.derived_features import expavg_stddev
 STEPS_PER_DAY = 4
 
 class RoboTrader:
-    def __init__(self, platform, balance=5000):
-        self.account = Account(platform, balance)
+    def __init__(self, platform, balance, steps_per_day: int):
+        self.account = Account(platform, balance, steps_per_day)
         self.platform = platform
 
         beta_15_days = 1 - 0.04 / STEPS_PER_DAY

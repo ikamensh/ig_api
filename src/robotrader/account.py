@@ -4,6 +4,10 @@ from contextlib import contextmanager
 MIN_PRICE = 10
 HIGH_PRICE = 90
 
+INTEREST_LONG = 1 / 1500
+INTEREST_SHORT = 1 / 4000
+
+
 class Platform:
     def __init__(self):
         self.high_bid = None
@@ -97,6 +101,15 @@ class Position:
         value = abs(self.amount) * (bid + ask) / 2
         return self.MARGIN_REQ * value
 
+    def daily_cost(self):
+        ask, bid = self.platform.market_ask, self.platform.market_bid
+        value = abs(self.amount) * (ask + bid) / 2
+        if self.amount > 0:
+            return value * INTEREST_LONG
+        else:
+            return value * INTEREST_SHORT
+
+
 
     def __repr__(self):
         return f"Position {self.id} ({self.amount=})"
@@ -107,11 +120,13 @@ class InsufficientFundsException(Exception):
 
 
 class Account:
-    def __init__(self, platform: Platform, balance, log_fn=lambda x: x):
+    def __init__(self, platform: Platform, balance: float, steps_per_day: int):
         self.balance = balance
         self.positions: typing.List[Position] = []
         self.pform = platform
-        # self.log_fn = log_fn
+        self.steps_per_day = steps_per_day
+        self.steps_counter = 0
+        self.day = 0
 
     def margin(self):
         return sum(p.margin() for p in self.positions)
@@ -148,6 +163,20 @@ class Account:
     def step(self):
         self._ensure_margin()
         self.stop_limit()
+
+        self.steps_counter += 1
+        if not self.steps_counter % self.steps_per_day:
+            self.steps_counter = 0
+            self.day += 1
+            days_to_pay = 1
+            if self.day == 5:
+                days_to_pay += 2
+                self.day = 0
+
+            for p in self.positions:
+                self.balance -= days_to_pay * p.daily_cost()
+
+
 
     def stop_limit(self):
         for p in list(self.positions):

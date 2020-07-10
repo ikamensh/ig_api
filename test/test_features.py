@@ -2,11 +2,12 @@ import math
 
 from src.robotrader.features.features import *
 
-def test_exp_avg():
-    f = ExpAvg(0.75, lambda x: x)
+def test_exp_avg(platform):
+    f = ExpAvg(0.75, price)
     values = []
-    for i in range(25):
-        f.update(i)
+    for p in range(25):
+        platform.set_prices(low_ask=p, low_bid=p, high_ask=p, high_bid=p)
+        f.update(platform)
         values.append(f.value)
 
     for i in range(len(values) - 1):

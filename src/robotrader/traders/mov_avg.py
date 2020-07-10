@@ -31,16 +31,16 @@ class MovingAvgTrader(RoboTrader):
                 except InsufficientFundsException:
                     pass
 
-            else:
-                amount = -5
-                try:
-                    self.account.open(
-                        amount,
-                        limit=price(self.platform)
-                        - 0.8
-                        - self.day_dev.value
-                        + self.price_momentum.value,
-                    )
-                except InsufficientFundsException:
-                    pass
+            # else:
+            #     amount = -5
+            #     try:
+            #         self.account.open(
+            #             amount,
+            #             limit=price(self.platform)
+            #             - 0.8
+            #             - self.day_dev.value
+            #             + self.price_momentum.value,
+            #         )
+            #     except InsufficientFundsException:
+            #         pass
 

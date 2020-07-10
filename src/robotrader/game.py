@@ -61,8 +61,10 @@ def visualize(rt):
         plt.clf()
 
 
-changes = [simulate() for i in range(100)]
-print(sorted(changes))
+changes = []
+for i in range(100):
+    changes.append(simulate())
+    print(i)
 
 plt.hist(changes)
 plt.show()

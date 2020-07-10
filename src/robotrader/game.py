@@ -23,7 +23,7 @@ def iter_cboe(rows):
 
 source, decoder = "../../data/ig_vix.csv", iter_my_format
 # source, decoder = "../../data/ig_vix_eu.csv", iter_my_format
-# source, decoder = "../../data/vixcurrent.csv", iter_cboe
+# source, decoder = "../../data/vix_official.csv", iter_cboe
 
 with open(source) as f:
     r = csv.reader(f)

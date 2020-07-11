@@ -4,6 +4,7 @@ from env.exceptions import InsufficientFundsException
 from env.position import Position
 from env.price_data import PriceData
 
+TAX_RATE = 0.25
 
 class Account:
     def __init__(self, platform: PriceData, balance: float, steps_per_day: int, log: typing.List = None):
@@ -14,6 +15,23 @@ class Account:
         self.steps_counter = 0
         self.day = 0
         self.log = log
+
+        self.year_tax = 0
+        self.year_start_balance = balance
+
+    def owed_tax(self):
+        gain = self.balance - self.year_start_balance
+        return gain * TAX_RATE
+
+    def settle_tax(self):
+        delta = self.owed_tax() - self.year_tax
+        if delta > 0:
+            self.balance -= delta
+            self.year_tax += delta
+        else:
+            tax_return = min( -delta, self.year_tax)
+            self.balance += tax_return
+            self.year_tax -= tax_return
 
     def margin(self):
         return sum(p.margin() for p in self.positions)
@@ -53,6 +71,7 @@ class Account:
             self.log.append(f"Closing position {position} for {profit=:.2f}")
         self.balance += profit
         self.positions.remove(position)
+        self.settle_tax()
 
     def step(self):
         self._ensure_margin()
@@ -63,8 +82,13 @@ class Account:
             self.steps_counter = 0
             self.day += 1
             days_to_pay = 1
-            if self.day == 5:
+            if not self.day % 7 == 5:
                 days_to_pay += 2
+                self.day += 2
+
+            if self.day >= 365:
+                self.year_tax = 0
+                self.year_start_balance = self.balance
                 self.day = 0
 
             for p in self.positions:

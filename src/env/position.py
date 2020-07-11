@@ -65,6 +65,7 @@ class Position:
             return abs(self.amount) * (HIGH_PRICE - self.price)
 
     def margin(self):
+        """Minimum balance to keep this position open. """
         ask, bid = self.platform.market_ask, self.platform.market_bid
         value = abs(self.amount) * (bid + ask) / 2
         return self.MARGIN_REQ * value

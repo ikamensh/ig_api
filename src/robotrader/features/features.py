@@ -1,26 +1,26 @@
 import collections
-
 import typing
 
 if typing.TYPE_CHECKING:
-    from src.robotrader.account import Platform
+    from env.price_data import PriceData
+
 
 class Feature:
     value: float
     last_step: int = 0
     fn: typing.Callable = None
 
-    def update(self, platform: "Platform"):
+    def update(self, platform: "PriceData"):
         if isinstance(self.fn, Feature):
             self.fn.update(platform)
         if self.last_step < platform.step:
             self.update_once(platform)
             self.last_step = platform.step
 
-    def update_once(self, platform: "Platform"):
+    def update_once(self, platform: "PriceData"):
         pass
 
-    def __call__(self, platform: "Platform"):
+    def __call__(self, platform: "PriceData"):
         self.update(platform)
         return self.value
 
@@ -45,7 +45,7 @@ class Pow(Feature):
 
 
 class ExpAvg(Feature):
-    def __init__(self, beta, fn: typing.Callable[["Platform"], float]):
+    def __init__(self, beta, fn: typing.Callable[["PriceData"], float]):
         assert 0.5 < beta < 1
         self.beta = beta
         self.value = None
@@ -53,7 +53,7 @@ class ExpAvg(Feature):
         self.count = 0
         self.warm_up_buf = []
 
-    def update_once(self, platform: "Platform"):
+    def update_once(self, platform: "PriceData"):
         if self.count < 10:
             self.warm_up_buf.append(self.fn(platform))
             self.value = sum(self.warm_up_buf) / len(self.warm_up_buf)
@@ -66,7 +66,7 @@ class WindowVariance(Feature):
     def __init__(self, n: int):
         self.memory = collections.deque(maxlen=n*2)
 
-    def update_once(self, platform: "Platform"):
+    def update_once(self, platform: "PriceData"):
         self.memory.extend( low_high(platform) )
 
     @property
@@ -80,18 +80,18 @@ class Momentum(Feature):
         self.last_val = None
         self.value = 0
 
-    def update_once(self, platform: "Platform"):
+    def update_once(self, platform: "PriceData"):
         if self.last_val:
             self.value = self.fn(platform) - self.last_val
         self.last_val = self.fn(platform)
 
 
 class MovingAvg(Feature):
-    def __init__(self, n, fn: typing.Callable[["Platform"], float]):
+    def __init__(self, n, fn: typing.Callable[["PriceData"], float]):
         self.memory = collections.deque(maxlen=n)
         self.fn = fn
 
-    def update_once(self, platform: "Platform"):
+    def update_once(self, platform: "PriceData"):
         self.memory.append(self.fn(platform))
 
     @property

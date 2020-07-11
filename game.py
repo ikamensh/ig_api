@@ -1,34 +1,30 @@
 from src.robotrader.traders.mov_avg import MovingAvgTrader
-from src.robotrader.traders.random import RandomTrader
-from src.robotrader.account import Platform
+from env.price_data import PriceData
 from matplotlib import pyplot as plt
 
 # from datasets.historical import ig_vix as price_dataset
 from datasets.random_slice import random_slice
 
-
 def simulate():
+    log = []
     price_dataset = random_slice(3)
-    platform = Platform(delta=price_dataset.delta)
-    rt = MovingAvgTrader(platform, 5_000, price_dataset.steps_per_day)
+    platform = PriceData(delta=price_dataset.delta)
+    rt = MovingAvgTrader(platform, 5_000, price_dataset.steps_per_day, log)
 
     for i, (date, low, high) in enumerate(price_dataset):
         platform.set_prices(low=low, high=high)
         rt.step()
-        # if not i % 10:
-        #     print(
-        #         i,
-        #         date,
-        #         f"  {platform.market_bid:.2f} {platform.market_ask:.2f}  ",
-        #         f"{rt.account.balance + rt.account.profit():.2f} {len(rt.account.positions)}",
-        #     )
+        log.append(
+                f"{i} {platform.market_bid:.2f} {platform.market_ask:.2f}  "
+                f"{rt.account.balance + rt.account.profit():.2f} {len(rt.account.positions)}",
+            )
 
     for p in list(rt.account.positions):
         rt.account.close(p)
 
     # visualize(rt)
 
-    return (rt.account.balance - 5_000) / 5_000
+    return (rt.account.balance - 5_000) / 5_000, log
 
 
 def visualize(rt):
@@ -63,8 +59,18 @@ def visualize(rt):
 
 changes = []
 for i in range(100):
-    changes.append(simulate())
+    change, log = simulate()
+    if change < -1:
+        with open("src/robotrader/game.log", 'w') as f:
+
+            f.write(str(change) + '\n')
+            for line in log:
+                f.write(line + '\n')
+
+        break
+    changes.append(change)
     print(i)
 
-plt.hist(changes)
+plt.hist(changes, bins=100)
+print(sorted(changes))
 plt.show()

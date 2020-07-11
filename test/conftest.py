@@ -1,10 +1,10 @@
 import pytest
 
-from src.robotrader.account import Platform
+from env.price_data import PriceData
 
 
 @pytest.fixture()
-def platform():
-    p = Platform(delta=1)
+def price_data():
+    p = PriceData(delta=1)
     p.set_prices(low=10, high=12)
     yield p

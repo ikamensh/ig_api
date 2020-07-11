@@ -1,11 +1,14 @@
 import random
 
-from src.robotrader.account import InsufficientFundsException
+from env.exceptions import InsufficientFundsException
 from src.robotrader.robotrader import RoboTrader
 
 
 class RandomTrader(RoboTrader):
     def decide_actions(self):
+        if self.account.risk() > self.account.balance:
+            return
+
         if random.random() < 0.1:
             try:
                 amt = random.choice([-20, 20])

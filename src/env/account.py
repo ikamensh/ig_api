@@ -1,6 +1,6 @@
 import typing
 
-from env.exceptions import InsufficientFundsException
+from env.exceptions import InsufficientFundsException, PositionTooSmall
 from env.position import Position
 from env.price_data import PriceData
 
@@ -78,6 +78,9 @@ class Account:
         Returns:
             the new position object
         """
+        if abs(amt) < 1:
+            raise PositionTooSmall
+
         pos = Position(amt, self.pform, limit=limit, stop=stop)
         if self.available() >= pos.margin():
             self.positions.append(pos)

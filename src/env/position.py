@@ -1,17 +1,18 @@
 from env.exceptions import InvalidBoundingPriceException
 from env.price_data import PriceData
 
+
 MIN_PRICE = 10
-HIGH_PRICE = 90
+HIGH_PRICE = 110
 
 INTEREST_LONG = 1 / 1500
 INTEREST_SHORT = 1 / 4000
+MARGIN_REQ = 0.2
 
 
 class Position:
     """A position in Volatility"""
     id = 1
-    MARGIN_REQ = 0.2
 
     def __init__(self, amount, price_data: PriceData, limit=None, stop=None):
         self.platform = price_data
@@ -68,7 +69,7 @@ class Position:
         """Minimum balance to keep this position open. """
         ask, bid = self.platform.market_ask, self.platform.market_bid
         value = abs(self.amount) * (bid + ask) / 2
-        return self.MARGIN_REQ * value
+        return MARGIN_REQ * value
 
     def daily_cost(self):
         ask, bid = self.platform.market_ask, self.platform.market_bid
@@ -85,3 +86,4 @@ class Position:
         if self.stop:
             result += f" stop: {self.stop}"
         return result
+

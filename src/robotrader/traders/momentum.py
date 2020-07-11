@@ -5,7 +5,7 @@ from src.robotrader.features.features import ExpAvg, Momentum, price
 from src.robotrader.features.derived_features import expavg_stddev
 
 
-class MovingAvgTrader(RoboTrader):
+class MomentumTrader(RoboTrader):
     def __init__(self, price_data, balance, steps_per_day, log):
         super().__init__(price_data, balance, steps_per_day, log)
 
@@ -34,7 +34,7 @@ class MovingAvgTrader(RoboTrader):
             return
 
         future_price = self.price_avg.value + self.price_momentum.value * 5
-        delta = price(self.platform) - future_price
+        delta = price(self.price_data) - future_price
         self.history['delta'].append(delta)
         self.history['neg_day_dev'].append(-self.day_dev.value)
         self.history['neg_week_dev'].append(-self.week_dev.value)
@@ -45,8 +45,8 @@ class MovingAvgTrader(RoboTrader):
                 try:
                     self.account.open(
                         amount,
-                        limit= max(price(self.platform), future_price) + self.day_dev.value ,
-                        stop= min(price(self.platform), future_price) - self.day_dev.value
+                        limit=max(price(self.price_data), future_price) + self.day_dev.value ,
+                        stop=min(price(self.price_data), future_price) - self.day_dev.value
                     )
                 except (InsufficientFundsException, InvalidBoundingPriceException):
                     pass
@@ -56,8 +56,8 @@ class MovingAvgTrader(RoboTrader):
                 try:
                     self.account.open(
                         amount,
-                        limit = min(price(self.platform), future_price) - self.day_dev.value,
-                        stop = max(price(self.platform), future_price) + self.day_dev.value
+                        limit =min(price(self.price_data), future_price) - self.day_dev.value,
+                        stop =max(price(self.price_data), future_price) + self.day_dev.value
                     )
                 except (InsufficientFundsException, InvalidBoundingPriceException):
                     pass

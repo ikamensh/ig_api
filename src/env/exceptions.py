@@ -1,6 +1,14 @@
-class InvalidBoundingPriceException(Exception):
+class CantOpenPosition(Exception):
     pass
 
 
-class InsufficientFundsException(Exception):
+class InvalidBoundingPriceException(CantOpenPosition):
+    pass
+
+
+class InsufficientFundsException(CantOpenPosition):
+    pass
+
+
+class PositionTooSmall(CantOpenPosition):
     pass

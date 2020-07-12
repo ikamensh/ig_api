@@ -5,22 +5,36 @@ from robotrader.traders.momentum import MomentumTrader
 from robotrader.traders.random import RandomTrader
 from simulate import simulate
 from matplotlib import pyplot as plt
+import time
 
-os.makedirs("logs", exist_ok=True)
 
-changes = []
-for i in range(100):
-    change, log = simulate(ExpAvgTrader, log=[])
+def one_run(i):
+    change, log = simulate(ExpAvgTrader, log=None)
     path = f"logs/game_{i}.log"
-    with open(path, 'w') as f:
-        print(os.path.abspath(path))
-        f.write(str(change) + '\n')
-        for line in log:
-            f.write(line + '\n')
+    # with open(path, 'w') as f:
+    #     print(os.path.abspath(path))
+    #     f.write(str(change) + '\n')
+    #     for line in log:
+    #         f.write(line + '\n')
 
-    changes.append(change)
     print(i)
+    return change
 
-plt.hist(changes, bins=100)
-print(sorted(changes))
-plt.show()
+if __name__ == "__main__":
+    os.makedirs("logs", exist_ok=True)
+    t = time.time()
+
+    n_tries = 1000
+    runs = list(range(1000))
+
+    import multiprocessing
+
+    pool = multiprocessing.Pool()
+    changes = pool.map(one_run, runs)
+
+    plt.hist(changes, bins=200)
+    print(sorted(changes))
+    print(changes[500])
+    print(f"{time.time() - t:.2f}")
+    plt.show()
+

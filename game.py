@@ -10,7 +10,7 @@ import time
 
 def one_run(i):
     change, log = simulate(ExpAvgTrader, log=None)
-    path = f"logs/game_{i}.log"
+    # path = f"logs/game_{i}.log"
     # with open(path, 'w') as f:
     #     print(os.path.abspath(path))
     #     f.write(str(change) + '\n')

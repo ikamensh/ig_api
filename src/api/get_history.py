@@ -62,19 +62,26 @@ def price_history(market, res, start, end):
     del headers["Version"]
 
 
-with open("../../data/ig_vix_eu.csv", "w", newline="") as csvfile:
+def write_history(market, file, start_date, end_date = None):
     writer = csv.writer(
-        csvfile, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL
+        file, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL
     )
 
-    end = datetime.datetime.now()
-    # start = datetime.datetime(year=2020, month=1, day=1)
-    start = end - datetime.timedelta(days=725)
+    end = end_date or datetime.datetime.now()
+    start = start_date
     for i, v in enumerate(
-        price_history(
-            markets.VIX_EU, resolutions.HOUR_2, start.isoformat(), end.isoformat()
-        )
+            price_history(
+                market, resolutions.HOUR_2, start.isoformat(), end.isoformat()
+            )
     ):
         if not i % 10:
             print(i)
         writer.writerow(v)
+
+if __name__ == "__main__":
+    from config import data_folder
+
+    with open(data_folder +  "/ig_vix.csv", "w", newline="") as csvfile:
+        start = datetime.datetime.now() - datetime.timedelta(days=365)
+        write_history(markets.VIX, csvfile, start)
+

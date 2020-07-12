@@ -1,0 +1,35 @@
+{
+    "accounts": [{
+        "accountId": "Z384TD",
+        "accountName": "Barriers und Optionen",
+        "accountAlias": null,
+        "status": "ENABLED",
+        "accountType": "CFD",
+        "preferred": false,
+        "balance": {
+            "balance": 10000.0,
+            "deposit": 0.0,
+            "profitLoss": 0.0,
+            "available": 10000.0
+        },
+        "currency": "EUR",
+        "canTransferFrom": true,
+        "canTransferTo": true
+    }, {
+        "accountId": "Z384TE",
+        "accountName": "CFD",
+        "accountAlias": null,
+        "status": "ENABLED",
+        "accountType": "CFD",
+        "preferred": true,
+        "balance": {
+            "balance": 82115.22,
+            "deposit": 0.0,
+            "profitLoss": 0.0,
+            "available": 82115.22
+        },
+        "currency": "EUR",
+        "canTransferFrom": true,
+        "canTransferTo": true
+    }]
+}

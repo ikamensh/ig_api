@@ -25,16 +25,18 @@ if __name__ == "__main__":
     t = time.time()
 
     n_tries = 1000
-    runs = list(range(1000))
+    runs = list(range(n_tries))
 
     import multiprocessing
 
     pool = multiprocessing.Pool()
     changes = pool.map(one_run, runs)
+    changes.sort()
 
     plt.hist(changes, bins=200)
-    print(sorted(changes))
-    print(changes[500])
+    print(f"Median: {changes[n_tries//2]:.4%}")
+    print(f"Average: {sum(changes)/n_tries:.4%}")
+    print(f"Loosing money in {len([c for c in changes if c < 0])/n_tries:.4%} cases.")
     print(f"{time.time() - t:.2f}")
     plt.show()
 

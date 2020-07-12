@@ -1,13 +1,14 @@
 from typing import ClassVar
 
 from datasets.random_slice import random_slice
+from datasets.fade_over import fadeover_4_years
 from env.price_data import PriceData
 from robotrader.robotrader import RoboTrader
 
 START_BALANCE = 5000
 
 def simulate(rt_cls: ClassVar[RoboTrader], log = None):
-    price_dataset = random_slice(3)
+    price_dataset = fadeover_4_years()
     platform = PriceData(delta=price_dataset.delta)
     rt = rt_cls(platform, START_BALANCE, price_dataset.steps_per_day, log)
 

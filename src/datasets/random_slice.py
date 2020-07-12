@@ -35,10 +35,10 @@ def upsample(low, high, times):
     yield low_s, high_s
 
 
-def random_slice(years: int):
+def random_slice(years: float):
 
     l = len(cboe_vix)
-    size = 365 * years * cboe_vix.steps_per_day
+    size = int(365 * 5 / 7 * years) * cboe_vix.steps_per_day
 
     start = random.randint(0, l - size)
 
@@ -63,7 +63,7 @@ def random_slice(years: int):
 
 if __name__ == "__main__":
     ds = random_slice(years=3)
-    print(len(ds))
+    print(len(ds) / (52.3 * (ds.steps_per_day*5) ) )
 
     from matplotlib import pyplot as plt
     prices = [sum(d[1:])/2 for d in ds]
@@ -72,3 +72,4 @@ if __name__ == "__main__":
     plt.grid()
     plt.title("Prices")
     plt.show()
+

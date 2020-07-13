@@ -1,18 +1,14 @@
 import requests
 from typing import List
-from unittest.mock import Mock
 
 from const import demo_url
-import markets
-from env.price_data import PriceData
 from src.api.login import headers
 
 from env.position import Position
-from bot.latest_prices import latest_prices
+from api.latest_prices import get_price_data
 
 
 positions_url = demo_url + "positions/"
-
 
 
 def get_positions() -> List[Position]:
@@ -29,18 +25,12 @@ def get_positions() -> List[Position]:
             amount *= -1
 
         price = float(pos["level"])
+        deal_id = pos["dealId"]
 
         market_id = market["epic"]
         market_name = market["instrumentName"]
 
-        if market_id in latest_prices:
-            price_data = latest_prices[market_id]
-        else:
-            delta = market["offer"] - market["bid"]
-            price_data = PriceData(delta, market_id=market_id)
-            latest_prices[market_id] = price_data
-
-        pos = Position(amount, price_data)
+        pos = Position(amount, get_price_data(market_id), deal_id=deal_id)
         pos.price = price
         result.append(pos)
 

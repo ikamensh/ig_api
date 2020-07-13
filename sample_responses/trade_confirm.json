@@ -1,0 +1,25 @@
+{
+    "date": "2020-07-13T14:21:54.649",
+    "status": "OPEN",
+    "reason": "SUCCESS",
+    "dealStatus": "ACCEPTED",
+    "epic": "UD.D.TSLA.CASH.IP",
+    "expiry": "-",
+    "dealReference": "NXC69DAVEL344TP",
+    "dealId": "DIAAAAD3VU4ZZAX",
+    "affectedDeals": [{
+        "dealId": "DIAAAAD3VU4ZZAX",
+        "status": "OPENED"
+    }],
+    "level": 1729.96,
+    "size": 10.0,
+    "direction": "BUY",
+    "stopLevel": null,
+    "limitLevel": null,
+    "stopDistance": null,
+    "limitDistance": null,
+    "guaranteedStop": false,
+    "trailingStop": false,
+    "profit": null,
+    "profitCurrency": null
+}

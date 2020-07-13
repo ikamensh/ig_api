@@ -9,12 +9,14 @@ markets_url = demo_url + "markets/"
 
 class Snapshot:
     def __init__(self, json_elem, market_id):
-        assert json_elem["epic"] == market_id
         self.status = json_elem["marketStatus"]
         self.bid = json_elem["bid"]
         self.offer = json_elem["offer"]
         self.update_time = json_elem["updateTime"]
-        self.delta = self.offer - self.bid
+        if self.offer is None or self.bid is None:  # why does this happen? idk.
+            self.delta = None
+        else:
+            self.delta = self.offer - self.bid
 
         self.low = json_elem["low"]
         self.high = json_elem["high"]

@@ -4,7 +4,7 @@ from api.query_market import Snapshot
 class PriceData:
     """This class stores and centrally updates price data for a single market."""
 
-    def __init__(self, delta, market_id, lowest=None, highest=None):
+    def __init__(self, market_id, delta = None, lowest=None, highest=None):
         """
         Args:
             delta: difference between buying and selling price in the market.
@@ -41,9 +41,10 @@ class PriceData:
             self.highest = high * 10
 
     def sync_snapshot(self, snapshot: Snapshot):
-        self.set_prices(snapshot.low, snapshot.high)
+        # self.set_prices(snapshot.low, snapshot.high)
         self.market_ask = snapshot.offer
         self.market_bid = snapshot.bid
+        self.delta = snapshot.delta
 
 
     @contextmanager

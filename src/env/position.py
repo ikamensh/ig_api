@@ -7,13 +7,14 @@ MARGIN_REQ = 0.2
 
 
 class Position:
-    """A position in Volatility"""
+    """A position in the market.
 
-    # TODO handle different markets - risk, etc.
-    def __init__(self, amount, price_data: PriceData, limit=None, stop=None, price = None):
+    Positions with a deal_id are actual positions, a simulated one otherwise."""
+
+    def __init__(self, amount, price_data: PriceData, limit=None, stop=None, price = None, deal_id = None):
         self.amount = amount
         self.price_data = price_data
-
+        self.deal_id = deal_id
 
         if price:
             self.price = price

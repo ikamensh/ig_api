@@ -1,10 +1,10 @@
 import datetime
 import os
 
-from api.get_account_detail import AccountDetails, get_acc_details
+from api.get_account_detail import get_acc_details
 from api.get_history import write_history
 from api.query_market import get_snapshot
-from bot.latest_prices import latest_prices
+from api.latest_prices import get_price_data
 from config import data_folder
 from datasets.historical import get_ig_vix_ds
 from markets import vix
@@ -36,7 +36,7 @@ update_history()
 
 log = []
 acc_details = get_acc_details()
-rt = ExpAvgTrader(balance=acc_details.balance, price_data=latest_prices[vix.code], log=log,
+rt = ExpAvgTrader(balance=acc_details.balance, price_data=get_price_data(vix.code), log=log,
                   steps_per_day=9)
 
 vix_ds = get_ig_vix_ds()

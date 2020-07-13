@@ -7,8 +7,7 @@ from api.latest_prices import get_price_data
 
 otc_url = demo_url + "positions/otc/"
 
-
-body ={
+body = {
     "expiry": "-",
     "orderType": "MARKET",
     "timeInForce": None,
@@ -25,6 +24,7 @@ body ={
     "currencyCode": "EUR"
 }
 
+
 def open_position(market, amount) -> str:
     body["epic"] = market
     body["size"] = abs(amount)
@@ -40,7 +40,9 @@ def open_position(market, amount) -> str:
 
     return r.json()["dealReference"]
 
+
 trade_confirm_url = demo_url + "confirms/"
+
 
 def deal_confirm(deal_reference) -> Position:
     r = requests.get(url=f"{trade_confirm_url}/{deal_reference}", headers=headers)
@@ -65,10 +67,9 @@ def deal_confirm(deal_reference) -> Position:
     return Position(amount=amount, price_data=get_price_data(market), price=price, deal_id=deal_id)
 
 
-
 if __name__ == "__main__":
     import markets
+
     ref = open_position(markets.VIX, 20)
     pos = deal_confirm(ref)
     print(pos.deal_id)
-

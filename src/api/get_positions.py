@@ -7,7 +7,6 @@ from src.api.login import headers
 from env.position import Position
 from api.latest_prices import get_price_data
 
-
 positions_url = demo_url + "positions/"
 
 

@@ -31,6 +31,7 @@ def update_history():
     with open(history_path, "a", newline="") as csvfile:
         write_history(vix.code, csvfile, start_date=d)
 
+
 STEPS_PER_DAY = 9
 update_history()
 
@@ -46,8 +47,10 @@ warm_up(rt, vix_ds)  # TODO move warm_up method to robotrader class
 def fake_close(pos):
     print(f"Close {pos} ")
 
+
 def fake_open(amt, limit=None, stop=None):
     print(f"Open position with amount {amt}, {limit=}, {stop=}")
+
 
 acc = rt.account
 acc.close = fake_close

@@ -10,14 +10,14 @@ TAX_RATE = 0.30
 class Account:
     def __init__(
         self,
-        platform: PriceData,
+        price_data: PriceData,
         balance: float,
         steps_per_day: int,
         log: typing.List = None,
     ):
         self.balance = balance
         self.positions: typing.List[Position] = []
-        self.pform = platform
+        self.pform = price_data
         self.steps_per_day = steps_per_day
         self.steps_counter = 0
         self.day = 0

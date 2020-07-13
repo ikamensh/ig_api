@@ -6,7 +6,6 @@ from env.position import Position
 
 otc_url = demo_url + "positions/otc"
 
-
 body = {
     "dealId": "DIAAAAD3V6WH2A2",
     "epic": None,
@@ -20,7 +19,7 @@ body = {
 
 
 def close_position(pos: Position) -> None:
-    body["size"] = str( abs(int(pos.amount)) )
+    body["size"] = str(abs(int(pos.amount)))
     body["dealId"] = pos.deal_id
 
     if pos.amount < 0:
@@ -49,4 +48,3 @@ if __name__ == "__main__":
 
     close_position(pos)
     print(len(get_positions()))
-

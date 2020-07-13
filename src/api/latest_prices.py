@@ -19,6 +19,7 @@ _vix_price_data.sync_snapshot(_vix_snap)
 
 _latest_prices[_vix_snap.market] = _vix_price_data
 
+
 def get_price_data(market):
     if not market in _latest_prices:
         price_data = PriceData(market)
@@ -26,4 +27,3 @@ def get_price_data(market):
         price_data.sync_snapshot(snap)
         _latest_prices[market] = price_data
     return _latest_prices[market]
-

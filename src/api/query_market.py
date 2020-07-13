@@ -24,12 +24,15 @@ class Snapshot:
         self.market = market_id
 
     def __repr__(self):
-        return f"market {self.market} is in status {self.status}, prices: {self.bid} | {self.offer} (updated at {self.update_time})"
+        return f"market {self.market} is in status {self.status}, " \
+               f"prices: {self.bid} | {self.offer} (updated at {self.update_time})"
+
 
 def get_snapshot(market) -> Snapshot:
     r = requests.get(url=markets_url + market, headers=headers)
     assert r.status_code == 200
     return Snapshot(r.json()["snapshot"], market)
+
 
 if __name__ == "__main__":
     vix_snapshot = get_snapshot(markets.VIX)

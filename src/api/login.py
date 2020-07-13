@@ -4,12 +4,13 @@ from const import demo_url
 
 key = "ab3e4a55c5f40b911bbf045d43846f7ba70103bc"
 headers = {
-    "X-IG-API-KEY" : key
+    "X-IG-API-KEY": key
 }
 login_url = demo_url + "session"
 
+
 def login():
-    body ={
+    body = {
         "identifier": "ikamen_demo",
         "password": "Ngrt52wsd",
         "encryptedPassword": None

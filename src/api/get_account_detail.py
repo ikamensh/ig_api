@@ -16,6 +16,7 @@ class AccountDetails:
     def __repr__(self):
         return f"Account {self.id} | {self.name} with balance {self.balance} {self.currency}"
 
+
 def get_acc_details() -> AccountDetails:
     r = requests.get(url=acc_url, headers=headers)
     assert r.status_code == 200

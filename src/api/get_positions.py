@@ -44,6 +44,7 @@ def get_positions() -> List[Position]:
         pos.price = price
         result.append(pos)
 
+    del headers["Version"]
     return result
 
 

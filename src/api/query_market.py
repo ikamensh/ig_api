@@ -24,6 +24,6 @@ def get_snapshot(market) -> Snapshot:
     assert r.status_code == 200
     return Snapshot(r.json()["snapshot"], market)
 
-
-vix_snapshot = get_snapshot(markets.VIX)
-print(vix_snapshot)
+if __name__ == "__main__":
+    vix_snapshot = get_snapshot(markets.VIX)
+    print(vix_snapshot)

@@ -17,6 +17,8 @@ class RoboTrader:
         self.price_data = price_data
         self.history = collections.defaultdict(list)
         self.features: typing.Dict[str, Feature] = {}
+        self.warm_up = False
+
 
 
     def step(self):
@@ -26,11 +28,11 @@ class RoboTrader:
             f.update(self.price_data)
             self.history[k].append(f.value)
 
-
-        try:
-            self.decide_actions()
-        except CantOpenPosition:
-            pass
+        if not self.warm_up:
+            try:
+                self.decide_actions()
+            except CantOpenPosition:
+                pass
 
         self.history['position'].append(self.account.asset())
         self.history['price'].append(price(self.price_data))

@@ -1,6 +1,6 @@
 from env.exceptions import InvalidBoundingPriceException
 from env.price_data import PriceData
-
+import markets
 
 MIN_PRICE = 10
 HIGH_PRICE = 110
@@ -14,10 +14,12 @@ class Position:
     """A position in Volatility"""
     id = 1
 
-    def __init__(self, amount, price_data: PriceData, limit=None, stop=None):
+    # TODO handle different markets - risk, etc.
+    def __init__(self, amount, price_data: PriceData, limit=None, stop=None, market=markets.VIX):
         self.platform = price_data
         ask, bid = price_data.market_ask, price_data.market_bid
         self.amount = amount
+        self.market = market
 
         try:
             if amount > 0:

@@ -13,4 +13,6 @@ GOLD = "CS.D.CFEGOLD.CFE.IP"
 VIX = "CC.D.VIX.UNC.IP"
 VIX_EU = "CC.D.VSTOXX.UNC.IP"
 
+TSLA = "UD.D.TSLA.CASH.IP"
+
 vix = Market("ig_vix", VIX)

@@ -1,10 +1,10 @@
 from contextlib import contextmanager
-
+from api.query_market import Snapshot
 
 class PriceData:
     """This class stores and centrally updates price data for a single market."""
 
-    def __init__(self, delta):
+    def __init__(self, delta, market_id, lowest=None, highest=None):
         """
         Args:
             delta: difference between buying and selling price in the market.
@@ -20,6 +20,10 @@ class PriceData:
         self.delta = delta
         self.step = 0
 
+        self.lowest = lowest or 0
+        self.highest = highest
+        self.market_id = market_id
+
     def set_prices(self, low, high):
         """Sets new price range. """
         assert low <= high
@@ -32,6 +36,15 @@ class PriceData:
         self.market_bid = (self.high_bid + self.low_bid) / 2
         self.market_ask = (self.high_ask + self.low_ask) / 2
         self.step += 1
+
+        if self.highest is None:
+            self.highest = high * 10
+
+    def sync_snapshot(self, snapshot: Snapshot):
+        self.set_prices(snapshot.low, snapshot.high)
+        self.market_ask = snapshot.offer
+        self.market_bid = snapshot.bid
+
 
     @contextmanager
     def moment_prices(self, bid, ask):

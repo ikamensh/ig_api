@@ -1,3 +1,7 @@
+"""
+add flag ` -m "not slow" ` to deselect slow tests.
+"""
+
 import pytest
 
 from env.price_data import PriceData
@@ -14,6 +18,6 @@ class TestPriceData(PriceData):
 
 @pytest.fixture()
 def price_data():
-    p = TestPriceData(delta=1)
+    p = TestPriceData(delta=1, market_id="vix", lowest=10, highest=110)
     p.set_prices(low=10, high=12)
     yield p

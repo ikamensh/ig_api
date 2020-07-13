@@ -19,7 +19,7 @@ def simulate(rt_cls: ClassVar[RoboTrader], log=None):
     START_BALANCE = 5000
 
     price_dataset = fadeover_4_years()
-    price_data = PriceData(delta=price_dataset.delta)
+    price_data = PriceData(delta=price_dataset.delta, market_id="vix")
     rt = rt_cls(price_data, START_BALANCE, price_dataset.steps_per_day, log)
 
     for i, (date, low, high) in enumerate(price_dataset):

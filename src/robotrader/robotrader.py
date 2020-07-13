@@ -2,7 +2,6 @@ import collections
 import typing
 
 from env.exceptions import CantOpenPosition
-from env.position import MIN_PRICE, HIGH_PRICE
 from src.robotrader.features.features import price
 from env.account import Account
 from env.price_data import PriceData
@@ -45,13 +44,13 @@ class RoboTrader:
     def max_long_amount(self):
 
         free_money = self.account.balance - self.account.risk()
-        risk_per_unit = self.price_data.market_ask - MIN_PRICE
+        risk_per_unit = self.price_data.market_ask - self.price_data.lowest
 
         return free_money / risk_per_unit
 
 
     def max_short_amount(self):
         free_money = self.account.balance - self.account.risk()
-        risk_per_unit = HIGH_PRICE - self.price_data.market_bid
+        risk_per_unit = self.price_data.highest - self.price_data.market_bid
 
         return free_money / risk_per_unit

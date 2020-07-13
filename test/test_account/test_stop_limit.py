@@ -1,4 +1,4 @@
-from env.account import Account
+from env.sim.account import Account
 
 
 def test_hit_limit_long(price_data):

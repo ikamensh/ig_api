@@ -3,7 +3,7 @@ import typing
 
 from env.exceptions import CantOpenPosition
 from src.robotrader.features.features import price
-from env.account import Account
+from env.sim.account import Account
 from env.price_data import PriceData
 
 if typing.TYPE_CHECKING:

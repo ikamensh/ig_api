@@ -12,6 +12,7 @@ class AccountDetails:
         self.name = json_elem["accountName"]
         self.id = json_elem["accountId"]
         self.currency = json_elem["currency"]
+        self.profit_loss = json_elem["profitLoss"]
 
     def __repr__(self):
         return f"Account {self.id} | {self.name} with balance {self.balance} {self.currency}"

@@ -1,30 +1,15 @@
 from env.exceptions import InvalidBoundingPriceException
-from env.price_data import PriceData
 
-INTEREST_LONG = 1 / 1500
-INTEREST_SHORT = 1 / 4000
-MARGIN_REQ = 0.2
+from abc import ABC
 
-
-class Position:
+class Position(ABC):
     """A position in the market.
 
     Positions with a deal_id are actual positions, a simulated one otherwise."""
-
-    def __init__(self, amount, price_data: PriceData, limit=None, stop=None, price = None, deal_id = None):
+    def __init__(self, amount, price, price_data=None, limit=None, stop=None):
         self.amount = amount
         self.price_data = price_data
-        self.deal_id = deal_id
-
-        if price:
-            self.price = price
-        else:
-            ask, bid = price_data.market_ask, price_data.market_bid
-
-            if amount > 0:
-                self.price = ask
-            else:
-                self.price = bid
+        self.price = price
 
         try:
             if amount > 0:
@@ -43,23 +28,6 @@ class Position:
         self.limit = limit
         self.stop = stop
 
-    def profit(self, *, mode="market"):
-        if mode == "market":
-            ask, bid = self.price_data.market_ask, self.price_data.market_bid
-        elif mode == "high":
-            ask, bid = self.price_data.high_ask, self.price_data.high_bid
-        elif mode == "low":
-            ask, bid = self.price_data.low_ask, self.price_data.low_bid
-        else:
-            raise Exception(f"invalid mode: {mode}")
-
-        if self.amount > 0:
-            cost = self.amount * self.price
-            win = self.amount * bid
-        else:
-            win = abs(self.amount) * self.price
-            cost = abs(self.amount) * ask
-        return win - cost
 
     def risk(self):
         """Amount of worst-case loss due to this position. """
@@ -72,15 +40,8 @@ class Position:
         """Minimum balance to keep this position open. """
         ask, bid = self.price_data.market_ask, self.price_data.market_bid
         value = abs(self.amount) * (bid + ask) / 2
-        return MARGIN_REQ * value
+        return self.price_data.margin_req * value
 
-    def daily_cost(self):
-        ask, bid = self.price_data.market_ask, self.price_data.market_bid
-        value = abs(self.amount) * (ask + bid) / 2
-        if self.amount > 0:
-            return value * INTEREST_LONG
-        else:
-            return value * INTEREST_SHORT
 
     def __repr__(self):
         result = f"Position in {self.price_data.market_id} | {self.amount:.2f} @ {self.price:.2f}"

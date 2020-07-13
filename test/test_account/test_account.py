@@ -1,6 +1,6 @@
 import pytest
 
-from env.account import Account
+from env.sim.account import Account
 
 
 @pytest.mark.parametrize("amount", [-50, 50])

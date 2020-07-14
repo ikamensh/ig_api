@@ -9,7 +9,7 @@ class Position(ABC):
     Positions with a deal_id are actual positions, a simulated one otherwise."""
     def __init__(self, amount, price, market_data: MarketData, limit=None, stop=None):
         self.amount = amount
-        self.price_data = market_data
+        self.market_data = market_data
         self.price = price
 
         try:
@@ -33,19 +33,19 @@ class Position(ABC):
     def risk(self):
         """Amount of worst-case loss due to this position. """
         if self.amount > 0:
-            return self.amount * (self.price - self.price_data.lowest)
+            return self.amount * (self.price - self.market_data.lowest)
         else:
-            return abs(self.amount) * (self.price_data.highest - self.price)
+            return abs(self.amount) * (self.market_data.highest - self.price)
 
     def margin(self):
         """Minimum balance to keep this position open. """
-        ask, bid = self.price_data.ask, self.price_data.bid
+        ask, bid = self.market_data.ask, self.market_data.bid
         value = abs(self.amount) * (bid + ask) / 2
-        return self.price_data.margin_req * value
+        return self.market_data.margin_req * value
 
 
     def __repr__(self):
-        result = f"Position in {self.price_data.market_id} | {self.amount:.2f} @ {self.price:.2f}"
+        result = f"Position in {self.market_data.market_id} | {self.amount:.2f} @ {self.price:.2f}"
         if self.limit:
             result += f" limit: {self.limit}"
         if self.stop:

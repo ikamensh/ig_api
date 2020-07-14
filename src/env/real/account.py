@@ -2,12 +2,10 @@ import collections
 import typing
 import datetime
 
+from api.ig_session import IgSession
 from env.abc.account import Account
 from env.real.position import RealPosition
 
-from api.get_positions import get_positions
-from api.create_position import open_position
-from api.close_position import close_position
 from api.get_account_detail import get_acc_details
 
 
@@ -17,8 +15,10 @@ class RealAccount(Account):
 
     def __init__(
             self,
+            sess: IgSession,
             log: typing.List = None,
     ):
+        self.sess = sess
         self.update_time = datetime.datetime.now()
         acc_details = get_acc_details()
         self._positions = None
@@ -28,7 +28,7 @@ class RealAccount(Account):
     @property
     def positions(self):
         if self._positions is None:
-            self._positions = get_positions()
+            self._positions = self.sess.get_positions()
         return self._positions
 
     def profit(self):
@@ -48,13 +48,13 @@ class RealAccount(Account):
         Returns:
             the new position object
         """
-        pos = open_position(amt, market)
+        pos = self.sess.open_position(amt, market)
         self.positions.append(pos)
         return pos
 
     def close(self, position: RealPosition):
         """Close a position at the market price."""
-        close_position(position)
+        self.sess.close_position(position)
         self.positions.remove(position)
 
     def step(self):

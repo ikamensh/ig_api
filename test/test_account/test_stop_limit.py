@@ -1,9 +1,9 @@
-from env.sim.account import Account
+from env.sim.account import SimAccount
 
 
 def test_hit_limit_long(price_data):
     balance_init = 5_000_000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(1000, limit=15)
     assert len(a.positions) == 1
 
@@ -15,7 +15,7 @@ def test_hit_limit_long(price_data):
 
 def test_miss_limit_long(price_data):
     balance_init = 5_000_000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(1000, limit=15)
     assert len(a.positions) == 1
 
@@ -27,7 +27,7 @@ def test_miss_limit_long(price_data):
 
 def test_hit_stop_long(price_data):
     balance_init = 5_000_000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(1000, stop=8)
     assert len(a.positions) == 1
 
@@ -39,7 +39,7 @@ def test_hit_stop_long(price_data):
 
 def test_miss_stop_long(price_data):
     balance_init = 5_000_000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(1000, stop=8)
     assert len(a.positions) == 1
 
@@ -51,7 +51,7 @@ def test_miss_stop_long(price_data):
 
 def test_hit_limit_short(price_data):
     balance_init = 5_000_000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(-1000, limit=5)
     assert len(a.positions) == 1
 
@@ -63,7 +63,7 @@ def test_hit_limit_short(price_data):
 
 def test_miss_limit_short(price_data):
     balance_init = 5_000_000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(-1000, limit=5)
     assert len(a.positions) == 1
 
@@ -75,7 +75,7 @@ def test_miss_limit_short(price_data):
 
 def test_hit_stop_short(price_data):
     balance_init = 5_000_000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(-1000, stop=15)
     assert len(a.positions) == 1
 
@@ -87,7 +87,7 @@ def test_hit_stop_short(price_data):
 
 def test_miss_stop_short(price_data):
     balance_init = 5_000_000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(-1000, stop=15)
     assert len(a.positions) == 1
 

@@ -1,11 +1,11 @@
 import pytest
 
-from env.sim.account import Account
+from env.sim.account import SimAccount
 
 @pytest.mark.parametrize("amount", [-50, 50])
 def test_profit(amount, price_data):
     balance_init = 5000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(amount)
     assert a.year_tax == 0
 
@@ -22,7 +22,7 @@ def test_loss_compensation(amount, price_data):
 
     paid_tax = 1000
     balance_init = 5000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     a.year_tax = paid_tax
     pos = a.open(amount)
 
@@ -37,7 +37,7 @@ def test_loss_compensation(amount, price_data):
 @pytest.mark.parametrize("amount", [-50, 50])
 def test_loss_no_compensation(amount, price_data):
     balance_init = 5000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(amount)
 
     price_data.change_price(- amount // 10)

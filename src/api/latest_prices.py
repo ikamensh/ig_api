@@ -1,6 +1,6 @@
 import markets
 from api.query_market import get_snapshot
-from env.price_data import PriceData
+from env.abc.market_data import MarketData
 
 _latest_prices = {}
 
@@ -9,7 +9,7 @@ _vix_snap = get_snapshot(markets.VIX)
 VIX_MIN_PRICE = 10
 VIX_HIGH_PRICE = 110
 
-_vix_price_data = PriceData(
+_vix_price_data = MarketData(
     delta=_vix_snap.delta,
     market_id=_vix_snap.market,
     lowest=VIX_MIN_PRICE,
@@ -22,7 +22,7 @@ _latest_prices[_vix_snap.market] = _vix_price_data
 
 def get_price_data(market):
     if not market in _latest_prices:
-        price_data = PriceData(market)
+        price_data = MarketData(market)
         snap = get_snapshot(market)
         price_data.sync_snapshot(snap)
         _latest_prices[market] = price_data

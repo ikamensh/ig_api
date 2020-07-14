@@ -2,7 +2,7 @@ import collections
 import typing
 
 if typing.TYPE_CHECKING:
-    from env.price_data import PriceData
+    from env.abc.market_data import MarketData
 
 
 class Feature:
@@ -10,25 +10,25 @@ class Feature:
     last_step: int = 0
     fn: typing.Callable = None
 
-    def update(self, platform: "PriceData"):
+    def update(self, platform: "MarketData"):
         if isinstance(self.fn, Feature):
             self.fn.update(platform)
         if self.last_step < platform.step:
             self.update_once(platform)
             self.last_step = platform.step
 
-    def update_once(self, platform: "PriceData"):
+    def update_once(self, platform: "MarketData"):
         pass
 
-    def __call__(self, platform: "PriceData"):
+    def __call__(self, platform: "MarketData"):
         self.update(platform)
         return self.value
 
-def variance(pform):
-    return ((pform.high_bid + pform.high_ask - pform.low_ask - pform.low_bid) / 4) ** 2
+def variance(market_data):
+    return ((market_data.high_bid + market_data.high_ask - market_data.low_ask - market_data.low_bid) / 4) ** 2
 
-def price(platform):
-    return (platform.market_ask + platform.market_bid) / 2
+def price(market_data):
+    return (market_data.ask + market_data.bid) / 2
 
 def low_high(platform):
     return (platform.high_ask + platform.high_bid) / 2, (platform.low_bid + platform.low_ask) / 2
@@ -45,7 +45,7 @@ class Pow(Feature):
 
 
 class ExpAvg(Feature):
-    def __init__(self, beta, fn: typing.Callable[["PriceData"], float]):
+    def __init__(self, beta, fn: typing.Callable[["MarketData"], float]):
         assert 0.5 < beta < 1
         self.beta = beta
         self.value = None
@@ -53,7 +53,7 @@ class ExpAvg(Feature):
         self.count = 0
         self.warm_up_buf = []
 
-    def update_once(self, platform: "PriceData"):
+    def update_once(self, platform: "MarketData"):
         if self.count < 10:
             self.warm_up_buf.append(self.fn(platform))
             self.value = sum(self.warm_up_buf) / len(self.warm_up_buf)
@@ -66,7 +66,7 @@ class WindowVariance(Feature):
     def __init__(self, n: int):
         self.memory = collections.deque(maxlen=n*2)
 
-    def update_once(self, platform: "PriceData"):
+    def update_once(self, platform: "MarketData"):
         self.memory.extend( low_high(platform) )
 
     @property
@@ -80,18 +80,18 @@ class Momentum(Feature):
         self.last_val = None
         self.value = 0
 
-    def update_once(self, platform: "PriceData"):
+    def update_once(self, platform: "MarketData"):
         if self.last_val:
             self.value = self.fn(platform) - self.last_val
         self.last_val = self.fn(platform)
 
 
 class MovingAvg(Feature):
-    def __init__(self, n, fn: typing.Callable[["PriceData"], float]):
+    def __init__(self, n, fn: typing.Callable[["MarketData"], float]):
         self.memory = collections.deque(maxlen=n)
         self.fn = fn
 
-    def update_once(self, platform: "PriceData"):
+    def update_once(self, platform: "MarketData"):
         self.memory.append(self.fn(platform))
 
     @property

@@ -67,7 +67,7 @@ def _deal_confirm(deal_reference) -> RealPosition:
     market = reply["epic"]
 
     return RealPosition(
-        amount=amount, price_data=get_price_data(market), price=price, deal_id=deal_id
+        amount=amount, market_data=get_price_data(market), price=price, deal_id=deal_id
     )
 
 def open_position(amount: int, market: str) -> RealPosition:

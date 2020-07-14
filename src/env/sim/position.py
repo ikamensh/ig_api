@@ -1,6 +1,5 @@
 from env.abc.position import Position
-from env.exceptions import InvalidBoundingPriceException
-from env.price_data import PriceData
+from env.abc.market_data import MarketData
 
 INTEREST_LONG = 1 / 1500
 INTEREST_SHORT = 1 / 4000
@@ -11,20 +10,20 @@ class SimPosition(Position):
 
     Positions with a deal_id are actual positions, a simulated one otherwise."""
 
-    def __init__(self, amount, price_data: PriceData, limit=None, stop=None):
+    def __init__(self, amount, market_data: MarketData, limit=None, stop=None):
 
-        ask, bid = price_data.market_ask, price_data.market_bid
+        ask, bid = market_data.ask, market_data.bid
 
         if amount > 0:
             price = ask
         else:
             price = bid
 
-        super().__init__(amount, price, price_data, limit, stop)
+        super().__init__(amount, price, market_data, limit, stop)
 
     def profit(self, *, mode="market"):
         if mode == "market":
-            ask, bid = self.price_data.market_ask, self.price_data.market_bid
+            ask, bid = self.price_data.ask, self.price_data.bid
         elif mode == "high":
             ask, bid = self.price_data.high_ask, self.price_data.high_bid
         elif mode == "low":
@@ -41,7 +40,7 @@ class SimPosition(Position):
         return win - cost
 
     def daily_cost(self):
-        ask, bid = self.price_data.market_ask, self.price_data.market_bid
+        ask, bid = self.price_data.ask, self.price_data.bid
         value = abs(self.amount) * (ask + bid) / 2
         if self.amount > 0:
             return value * INTEREST_LONG

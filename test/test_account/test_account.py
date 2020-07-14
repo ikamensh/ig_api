@@ -1,12 +1,12 @@
 import pytest
 
-from env.sim.account import Account
+from env.sim.account import SimAccount
 
 
 @pytest.mark.parametrize("amount", [-50, 50])
 def test_cycle_negative(amount, price_data):
     balance_init = 5000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(amount)
     a.close(pos)
 
@@ -17,7 +17,7 @@ def test_cycle_negative(amount, price_data):
 @pytest.mark.parametrize("amount", [-50, 50])
 def test_profit(amount, price_data):
     balance_init = 5000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(amount)
     price_data.change_price(amount//10)
     a.close(pos)
@@ -28,7 +28,7 @@ def test_profit(amount, price_data):
 @pytest.mark.parametrize("amount", [-50, 50])
 def test_loss(amount, price_data):
     balance_init = 5000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(amount)
     price_data.change_price( - amount // 10)
     a.close(pos)
@@ -38,7 +38,7 @@ def test_loss(amount, price_data):
 
 def test_ensure_margin_long(price_data):
     balance_init = 5000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(1000)
     assert len(a.positions) == 1
 
@@ -49,7 +49,7 @@ def test_ensure_margin_long(price_data):
 
 def test_ensure_margin_short(price_data):
     balance_init = 5000
-    a = Account(price_data, balance=balance_init, steps_per_day=100)
+    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
     pos = a.open(-1000)
     assert len(a.positions) == 1
 

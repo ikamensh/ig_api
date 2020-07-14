@@ -1,4 +1,5 @@
 from env.exceptions import InvalidBoundingPriceException
+from env.abc.market_data import MarketData
 
 from abc import ABC
 
@@ -6,9 +7,9 @@ class Position(ABC):
     """A position in the market.
 
     Positions with a deal_id are actual positions, a simulated one otherwise."""
-    def __init__(self, amount, price, price_data=None, limit=None, stop=None):
+    def __init__(self, amount, price, market_data: MarketData, limit=None, stop=None):
         self.amount = amount
-        self.price_data = price_data
+        self.price_data = market_data
         self.price = price
 
         try:
@@ -38,7 +39,7 @@ class Position(ABC):
 
     def margin(self):
         """Minimum balance to keep this position open. """
-        ask, bid = self.price_data.market_ask, self.price_data.market_bid
+        ask, bid = self.price_data.ask, self.price_data.bid
         value = abs(self.amount) * (bid + ask) / 2
         return self.price_data.margin_req * value
 

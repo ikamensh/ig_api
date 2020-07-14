@@ -1,8 +1,8 @@
 import typing
 
 from env.exceptions import InsufficientFundsException
+from env.sim.market_data import SimMarket
 from env.sim.position import SimPosition
-from env.price_data import PriceData
 from env.abc.account import Account
 
 TAX_RATE = 0.30
@@ -16,7 +16,7 @@ class SimAccount(Account):
 
     def __init__(
             self,
-            price_data: PriceData,
+            price_data: SimMarket,
             balance: float,
             steps_per_day: int,
             log: typing.List = None,
@@ -78,7 +78,7 @@ class SimAccount(Account):
         assert amt != 0
 
         pos = SimPosition(amt, self.price_data, limit=limit, stop=stop)
-        if self.available() >= pos.margin():
+        if self.available >= pos.margin():
             self.positions.append(pos)
             if self.log is not None:
                 self.log.append(f"Opening position {pos}")
@@ -155,6 +155,6 @@ class SimAccount(Account):
 
     def _ensure_margin(self):
         """Close positions until margin requirements are satisfied. """
-        while self.available() < 0 and self.positions:
+        while self.available < 0 and self.positions:
             pos = self.positions[-1]
             self.close(pos)

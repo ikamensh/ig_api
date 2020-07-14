@@ -1,8 +1,7 @@
 from typing import ClassVar
 
-from datasets.random_slice import random_slice
 from datasets.fade_over import fadeover_4_years
-from env.price_data import PriceData
+from env.sim.market_data import SimMarket
 from robotrader.robotrader import RoboTrader
 
 
@@ -19,7 +18,7 @@ def simulate(rt_cls: ClassVar[RoboTrader], log=None):
     START_BALANCE = 5000
 
     price_dataset = fadeover_4_years()
-    price_data = PriceData(delta=price_dataset.delta, market_id="vix")
+    price_data = SimMarket(delta=price_dataset.delta, market_id="vix")
     rt = rt_cls(price_data, START_BALANCE, price_dataset.steps_per_day, log)
 
     for i, (date, low, high) in enumerate(price_dataset):
@@ -27,7 +26,7 @@ def simulate(rt_cls: ClassVar[RoboTrader], log=None):
         rt.step()
         if log is not None:
             log.append(
-                f"{i} {price_data.market_bid:.2f} {price_data.market_ask:.2f}  "
+                f"{i} {price_data.bid:.2f} {price_data.ask:.2f}  "
                 f"{rt.account.balance + rt.account.profit():.2f} {len(rt.account.positions)}",
             )
 

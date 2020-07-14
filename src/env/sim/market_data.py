@@ -1,10 +1,11 @@
 from contextlib import contextmanager
-from api.query_market import Snapshot
+from env.abc.market_data import MarketData
 
-class PriceData:
+
+class SimMarket(MarketData):
     """This class stores and centrally updates price data for a single market."""
 
-    def __init__(self, market_id, delta = None, lowest=None, highest=None):
+    def __init__(self, market_id, delta, lowest=None, highest=None):
         """
         Args:
             delta: difference between buying and selling price in the market.
@@ -15,14 +16,17 @@ class PriceData:
         self.low_bid = None
         self.low_ask = None
 
-        self.market_ask = None
-        self.market_bid = None
         self.delta = delta
         self.step = 0
 
-        self.lowest = lowest or 0
-        self.highest = highest
-        self.market_id = market_id
+        super().__init__(
+            market_id,
+            bid=None,
+            ask=None,
+            margin_req=0.2,
+            lowest=lowest,
+            highest=highest,
+        )
 
     def set_prices(self, low, high):
         """Sets new price range. """
@@ -33,25 +37,19 @@ class PriceData:
         self.high_ask = high + self.delta / 2
         self.high_bid = high - self.delta / 2
 
-        self.market_bid = (self.high_bid + self.low_bid) / 2
-        self.market_ask = (self.high_ask + self.low_ask) / 2
+        self.bid = (self.high_bid + self.low_bid) / 2
+        self.ask = (self.high_ask + self.low_ask) / 2
+        self.delta = self.ask - self.bid
         self.step += 1
 
         if self.highest is None:
             self.highest = high * 10
 
-    def sync_snapshot(self, snapshot: Snapshot):
-        # self.set_prices(snapshot.low, snapshot.high)
-        self.market_ask = snapshot.offer
-        self.market_bid = snapshot.bid
-        self.delta = snapshot.delta
-
-
     @contextmanager
     def moment_prices(self, bid, ask):
         """Use specific price between current min and max price."""
-        old_ask, old_bid = self.market_ask, self.market_bid
-        self.market_ask = min(self.high_ask, max(self.low_ask, ask))
-        self.market_bid = min(self.high_bid, max(self.low_bid, bid))
+        old_ask, old_bid = self.ask, self.bid
+        self.ask = min(self.high_ask, max(self.low_ask, ask))
+        self.bid = min(self.high_bid, max(self.low_bid, bid))
         yield
-        self.market_ask, self.market_bid = old_ask, old_bid
+        self.ask, self.bid = old_ask, old_bid

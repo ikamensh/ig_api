@@ -2,17 +2,17 @@ import collections
 import typing
 
 from env.exceptions import CantOpenPosition
+from env.sim.market_data import SimMarket
 from src.robotrader.features.features import price
-from env.sim.account import Account
-from env.price_data import PriceData
+from env.sim.account import SimAccount
 
 if typing.TYPE_CHECKING:
     from robotrader.features.features import Feature
 
 
 class RoboTrader:
-    def __init__(self, price_data: PriceData, balance, steps_per_day: int, log: typing.List):
-        self.account = Account(price_data, balance, steps_per_day, log)
+    def __init__(self, price_data: SimMarket, balance, steps_per_day: int, log: typing.List):
+        self.account = SimAccount(price_data, balance, steps_per_day, log)
         self.price_data = price_data
         self.history = collections.defaultdict(list)
         self.features: typing.Dict[str, Feature] = {}
@@ -33,7 +33,7 @@ class RoboTrader:
             except CantOpenPosition:
                 pass
 
-        self.history['position'].append(self.account.asset())
+        self.history['position'].append(self.account.assets()['vix'])
         self.history['price'].append(price(self.price_data))
         self.history['balance'].append(self.account.balance)
 
@@ -44,13 +44,13 @@ class RoboTrader:
     def max_long_amount(self):
 
         free_money = self.account.balance - self.account.risk()
-        risk_per_unit = self.price_data.market_ask - self.price_data.lowest
+        risk_per_unit = self.price_data.ask - self.price_data.lowest
 
         return free_money / risk_per_unit
 
 
     def max_short_amount(self):
         free_money = self.account.balance - self.account.risk()
-        risk_per_unit = self.price_data.highest - self.price_data.market_bid
+        risk_per_unit = self.price_data.highest - self.price_data.bid
 
         return free_money / risk_per_unit

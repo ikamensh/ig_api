@@ -13,7 +13,7 @@ if typing.TYPE_CHECKING:
 
 
 class RoboTrader:
-    def __init__(self, account: Account, market_data: MarketData):
+    def __init__(self, account: Account, market_data: MarketData, steps_per_day: int = None):
         self.account = account
         self.market_data = market_data
         self.history = collections.defaultdict(list)

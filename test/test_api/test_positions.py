@@ -41,3 +41,13 @@ def test_close_position(sess):
 
     assert len(positions_before) == len(positions_after)
 
+def test_close_all(sess):
+
+    positions_before = sess.get_positions()
+    for pos in positions_before:
+        sess.close_position(pos)
+
+    positions_after = sess.get_positions()
+
+    assert not positions_after
+

@@ -1,7 +1,8 @@
 import time
+
+import config
 import markets
 from api.data_model.market_history import MarketHistory
-
 from api.ig_session import IgSession
 from credentials import account_id, key, password
 from datasets.historical import get_ig_vix_ds
@@ -37,11 +38,12 @@ def startup():
         print(msg)
 
 if __name__ == "__main__":
-    try:
-        while True:
+    while True:
+        try:
+            print("tick!")
             startup()
-            time.sleep(7200)
-    except:
-        pass
+        except Exception as e:
+            print(e)
+        time.sleep(7200)
 
 

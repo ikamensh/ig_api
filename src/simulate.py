@@ -21,7 +21,7 @@ def simulate(rt_cls: ClassVar[RoboTrader], log=None):
     price_dataset = fadeover_4_years()
     market_data = SimMarket(delta=price_dataset.delta, market_id="vix")
     account = SimAccount(balance=START_BALANCE, market_data=market_data, steps_per_day=price_dataset.steps_per_day)
-    rt = rt_cls(account, market_data)
+    rt = rt_cls(account, market_data, price_dataset.steps_per_day)
 
     for i, (date, low, high) in enumerate(price_dataset):
         market_data.set_prices(low=low, high=high)

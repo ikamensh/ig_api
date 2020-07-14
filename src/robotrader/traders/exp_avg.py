@@ -25,7 +25,6 @@ class ExpAvgTrader(RoboTrader):
         }
 
     def decide_actions(self):
-        print("deciding action")
 
         free = (
             self.account.balance - self.account.risk() - self.account.margin()
@@ -58,7 +57,7 @@ class ExpAvgTrader(RoboTrader):
             max_amt = self.max_long_amount()
             factor = abs(delta) ** 2
             self.account.open(
-                int(factor * max_amt),
+                max(1, int(factor * max_amt)),
                 market=self.market_data.market_id,
                 limit=self.market_data.ask * 1.2,
             )
@@ -72,7 +71,7 @@ class ExpAvgTrader(RoboTrader):
             max_amt = self.max_short_amount()
             factor = abs(delta) ** 2
             self.account.open(
-                -int(factor * max_amt),
+                -max(1, int(factor * max_amt)),
                 market=self.market_data.market_id,
                 limit=self.market_data.bid * 0.8,
             )

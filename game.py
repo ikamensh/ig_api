@@ -1,8 +1,6 @@
 import os
 
 from robotrader.traders.exp_avg import ExpAvgTrader
-from robotrader.traders.momentum import MomentumTrader
-from robotrader.traders.random import RandomTrader
 from simulate import simulate
 from matplotlib import pyplot as plt
 import time

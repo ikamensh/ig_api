@@ -6,8 +6,8 @@ from src.robotrader.features.derived_features import expavg_stddev
 
 
 class MomentumTrader(RoboTrader):
-    def __init__(self, price_data, balance, steps_per_day, log):
-        super().__init__(price_data, balance, steps_per_day, log)
+    def __init__(self, market_data, balance, steps_per_day, log):
+        super().__init__(market_data, balance, steps_per_day, log)
 
         def beta_days( days ):
             return 1 - 0.6 / days
@@ -34,7 +34,7 @@ class MomentumTrader(RoboTrader):
             return
 
         future_price = self.price_avg.value + self.price_momentum.value * 5
-        delta = price(self.price_data) - future_price
+        delta = price(self.market_data) - future_price
         self.history['delta'].append(delta)
         self.history['neg_day_dev'].append(-self.day_dev.value)
         self.history['neg_week_dev'].append(-self.week_dev.value)
@@ -45,8 +45,8 @@ class MomentumTrader(RoboTrader):
                 try:
                     self.account.open(
                         amount,
-                        limit=max(price(self.price_data), future_price) + self.day_dev.value ,
-                        stop=min(price(self.price_data), future_price) - self.day_dev.value
+                        limit=max(price(self.market_data), future_price) + self.day_dev.value ,
+                        stop=min(price(self.market_data), future_price) - self.day_dev.value
                     )
                 except (InsufficientFundsException, InvalidBoundingPriceException):
                     pass
@@ -56,8 +56,8 @@ class MomentumTrader(RoboTrader):
                 try:
                     self.account.open(
                         amount,
-                        limit =min(price(self.price_data), future_price) - self.day_dev.value,
-                        stop =max(price(self.price_data), future_price) + self.day_dev.value
+                        limit =min(price(self.market_data), future_price) - self.day_dev.value,
+                        stop =max(price(self.market_data), future_price) + self.day_dev.value
                     )
                 except (InsufficientFundsException, InvalidBoundingPriceException):
                     pass

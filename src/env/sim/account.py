@@ -16,13 +16,14 @@ class SimAccount(Account):
 
     def __init__(
             self,
-            price_data: SimMarket,
+            market_data: SimMarket,
             balance: float,
             steps_per_day: int,
             log: typing.List = None,
     ):
         super().__init__(balance, log)
-        self.price_data = price_data
+        self.positions = []
+        self.market_data = market_data
         self.steps_per_day = steps_per_day
         self.steps_counter = 0
         self.day = 0
@@ -77,7 +78,7 @@ class SimAccount(Account):
         assert isinstance(amt, int)
         assert amt != 0
 
-        pos = SimPosition(amt, self.price_data, limit=limit, stop=stop)
+        pos = SimPosition(amt, self.market_data, limit=limit, stop=stop)
         if self.available >= pos.margin():
             self.positions.append(pos)
             if self.log is not None:
@@ -128,28 +129,28 @@ class SimAccount(Account):
         """ Close positions according to set stops and limits. """
         for p in list(self.positions):
             if p.amount > 0:  # long
-                if p.limit is not None and p.limit <= self.price_data.high_bid:
-                    with self.price_data.moment_prices(
-                            bid=p.limit, ask=p.limit + self.price_data.delta
+                if p.limit is not None and p.limit <= self.market_data.high_bid:
+                    with self.market_data.moment_prices(
+                            bid=p.limit, ask=p.limit + self.market_data.delta
                     ):
                         self.close(p)
 
-                elif p.stop is not None and p.stop >= self.price_data.low_bid:
-                    with self.price_data.moment_prices(
-                            bid=p.stop, ask=p.stop + self.price_data.delta
+                elif p.stop is not None and p.stop >= self.market_data.low_bid:
+                    with self.market_data.moment_prices(
+                            bid=p.stop, ask=p.stop + self.market_data.delta
                     ):
                         self.close(p)
 
             else:  # short
-                if p.limit is not None and p.limit >= self.price_data.low_ask:
-                    with self.price_data.moment_prices(
-                            bid=p.limit - self.price_data.delta, ask=p.limit
+                if p.limit is not None and p.limit >= self.market_data.low_ask:
+                    with self.market_data.moment_prices(
+                            bid=p.limit - self.market_data.delta, ask=p.limit
                     ):
                         self.close(p)
 
-                elif p.stop is not None and p.stop < self.price_data.high_ask:
-                    with self.price_data.moment_prices(
-                            bid=p.stop - self.price_data.delta, ask=p.stop
+                elif p.stop is not None and p.stop < self.market_data.high_ask:
+                    with self.market_data.moment_prices(
+                            bid=p.stop - self.market_data.delta, ask=p.stop
                     ):
                         self.close(p)
 

@@ -15,20 +15,17 @@ _demo_url = "https://demo-api.ig.com/gateway/deal/"
 
 
 class IgSession:
-
     def __init__(self, identifier, key, password, demo=True):
         self.master_url = _demo_url if demo else None
 
-        headers = {
-            "X-IG-API-KEY": key
-        }
+        headers = {"X-IG-API-KEY": key}
 
         login_url = self.master_url + "session"
 
         body = {
             "identifier": identifier,
             "password": password,
-            "encryptedPassword": None
+            "encryptedPassword": None,
         }
         r = requests.post(url=login_url, headers=headers, json=body)
         if r.status_code != 200:
@@ -52,7 +49,7 @@ class IgSession:
         yield
         del self.headers["_method"]
 
-    def get_market_data(self, market) -> RealMarket:
+    def _get_market_data(self, market) -> RealMarket:
         markets_url = self.master_url + "markets/"
 
         with self.use_version(3):
@@ -93,14 +90,18 @@ class IgSession:
             market_id = market["epic"]
             market_name = market["instrumentName"]
 
-            pos = RealPosition(amount, self.get_price_data(market_id), deal_id=deal_id, price=price)
+            # can be expensive - we make API call for each new market we see.
+            # Actual data is already in the response.
+            pos = RealPosition(
+                amount, self.get_market_data(market_id), deal_id=deal_id, price=price
+            )
             result.append(pos)
 
         return result
 
-    def get_price_data(self, market):
+    def get_market_data(self, market) -> RealMarket:
         if not market in self._latest_prices:
-            price_data = self.get_market_data(market)
+            price_data = self._get_market_data(market)
             self._latest_prices[market] = price_data
 
         return self._latest_prices[market]
@@ -133,14 +134,16 @@ class IgSession:
             body["direction"] = "BUY"
         with self.use_version(2):
             r = requests.post(url=otc_url, headers=self.headers, json=body)
-        assert r.status_code == 200
+        assert r.status_code == 200, r.json()
 
         return r.json()["dealReference"]
 
     def _deal_confirm(self, deal_reference) -> RealPosition:
         trade_confirm_url = self.master_url + "confirms/"
 
-        r = requests.get(url=f"{trade_confirm_url}/{deal_reference}", headers=self.headers)
+        r = requests.get(
+            url=f"{trade_confirm_url}/{deal_reference}", headers=self.headers
+        )
         assert r.status_code == 200
 
         reply = r.json()
@@ -160,7 +163,10 @@ class IgSession:
         market = reply["epic"]
 
         return RealPosition(
-            amount=amount, market_data=self.get_price_data(market), price=price, deal_id=deal_id
+            amount=amount,
+            market_data=self.get_market_data(market),
+            price=price,
+            deal_id=deal_id,
         )
 
     def open_position(self, amount: int, market: str) -> RealPosition:
@@ -198,31 +204,36 @@ class IgSession:
         assert r.status_code == 200, r.json()
 
         target_name = "CFD"
+        matches = []
         for acc in r.json()["accounts"]:
             if acc["accountName"] == target_name:
-                return AccountDetails(acc)
+                matches.append(AccountDetails(acc))
 
-        raise Exception(f"Account not found. {r.json()}")
+        if not matches:
+            raise Exception(f"Account not found. {r.json()}")
 
-    def price_history(self, market, resolution, start, end):
+        if len(matches) > 1:
+            raise Exception(f"Multiple accounts found.")
+
+        return matches[0]
+
+    def price_history(
+        self,
+        market: str,
+        resolution: str,
+        start: datetime.datetime,
+        end: datetime.datetime,
+    ):
         prices_url = self.master_url + "prices/"
 
-        if isinstance(start, datetime.datetime):
-            start = start.isoformat()
+        start = start.isoformat()
+        end = end.isoformat()
 
-        if isinstance(end, datetime.datetime):
-            end = start.isoformat()
-        assert isinstance(start, str)
-        assert isinstance(end, str)
-
-        payload = {
-            "resolution": resolution,
-            "from": start,
-            "to": end,
-            "pageSize": 500
-        }
+        payload = {"resolution": resolution, "from": start, "to": end, "pageSize": 500}
         with self.use_version(3):
-            r = requests.get(url=prices_url + market, headers=self.headers, params=payload)
+            r = requests.get(
+                url=prices_url + market, headers=self.headers, params=payload
+            )
             if r.status_code != 200:
                 raise Exception(f"API error: {r.text}")
 
@@ -231,21 +242,29 @@ class IgSession:
 
             for page in range(1, n_pages + 1):
                 payload["pageNumber"] = page
-                r = requests.get(url=prices_url + market, headers=self.headers, params=payload)
+                r = requests.get(
+                    url=prices_url + market, headers=self.headers, params=payload
+                )
                 if r.status_code != 200:
                     raise Exception(f"API error: {r.text}")
 
-                j = r.json()
-                if "prices" in j:
-                    for p in j["prices"]:
+                reply = r.json()
+                if "prices" in reply:
+                    for p in reply["prices"]:
                         t = p["snapshotTimeUTC"]
 
-                        elem = t, p["lowPrice"]["bid"], p["lowPrice"]["ask"], p["highPrice"]["bid"], \
-                               p["highPrice"]["ask"]
+                        elem = (
+                            t,
+                            p["lowPrice"]["bid"],
+                            p["lowPrice"]["ask"],
+                            p["highPrice"]["bid"],
+                            p["highPrice"]["ask"],
+                        )
                         if all(x is not None for x in elem):
                             yield elem
 
             else:
                 rem_allowance = r.json()["metadata"]["allowance"]["remainingAllowance"]
                 print(
-                    f"Used allowance: {init_allowance - rem_allowance}, remaining: {rem_allowance}")
+                    f"Used allowance: {init_allowance - rem_allowance}, remaining: {rem_allowance}"
+                )

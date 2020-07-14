@@ -7,6 +7,7 @@ from abc import ABC
 
 class Account(ABC):
     available: float
+    positions: typing.List[Position]
 
     def __init__(
             self,
@@ -14,7 +15,6 @@ class Account(ABC):
             log: typing.List = None,
     ):
         self.balance = balance
-        self.positions: typing.List[Position] = []
         self.log = log
 
     def margin(self):

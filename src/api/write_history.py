@@ -12,7 +12,7 @@ class resolutions:
 
 def write_history(sess, market, file, start_date, end_date=None):
     writer = csv.writer(
-        file, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL
+        file, delimiter=","
     )
 
     end = end_date or datetime.datetime.now()

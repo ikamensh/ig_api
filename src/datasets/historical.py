@@ -16,7 +16,7 @@ def iter_cboe(rows):
 
 
 def get_ig_vix_ds():
-    return HistoricDataset( data_folder + "/ig_vix.csv", iter_my_format, steps_per_day=9, delta=0.16)
+    return HistoricDataset( data_folder + "/vix.csv", iter_my_format, steps_per_day=9, delta=0.16)
 
 ig_vix_eu = HistoricDataset( data_folder + "/ig_vix_eu.csv", iter_my_format, steps_per_day=8, delta=0.3)
 cboe_vix = HistoricDataset( data_folder + "/vix_official.csv", iter_cboe, 1, delta=0.2)

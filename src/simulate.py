@@ -1,32 +1,34 @@
 from typing import ClassVar
 
 from datasets.fade_over import fadeover_4_years
+from env.sim.account import SimAccount
 from env.sim.market_data import SimMarket
 from robotrader.robotrader import RoboTrader
 
 
 def warm_up(robotrader: RoboTrader, ds):
-    old = robotrader.warm_up
-    robotrader.warm_up = True
+    old = robotrader._warm_up
+    robotrader._warm_up = True
     for _, low, high in ds:
-        robotrader.price_data.set_prices(low, high)
+        robotrader.market_data.set_prices(low, high)
         robotrader.step()
-    robotrader.warm_up = old
+    robotrader._warm_up = old
 
 
 def simulate(rt_cls: ClassVar[RoboTrader], log=None):
     START_BALANCE = 5000
 
     price_dataset = fadeover_4_years()
-    price_data = SimMarket(delta=price_dataset.delta, market_id="vix")
-    rt = rt_cls(price_data, START_BALANCE, price_dataset.steps_per_day, log)
+    market_data = SimMarket(delta=price_dataset.delta, market_id="vix")
+    account = SimAccount(balance=START_BALANCE, market_data=market_data, steps_per_day=price_dataset.steps_per_day)
+    rt = rt_cls(account, market_data)
 
     for i, (date, low, high) in enumerate(price_dataset):
-        price_data.set_prices(low=low, high=high)
+        market_data.set_prices(low=low, high=high)
         rt.step()
         if log is not None:
             log.append(
-                f"{i} {price_data.bid:.2f} {price_data.ask:.2f}  "
+                f"{i} {market_data.bid:.2f} {market_data.ask:.2f}  "
                 f"{rt.account.balance + rt.account.profit():.2f} {len(rt.account.positions)}",
             )
 

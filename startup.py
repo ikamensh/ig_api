@@ -4,7 +4,7 @@ from loguru import logger
 
 import config
 import markets
-from api.data_model.market_history import MarketHistory
+from api.data_model.market_history import MarketHistory, Resolutions
 from api.ig_session import IgSession
 from credentials import account_id, key, password
 from datasets.historical import get_ig_vix_ds
@@ -18,7 +18,7 @@ VIX_HIGH_PRICE = 110
 def startup():
     sess = IgSession(account_id, key, password)
 
-    mh = MarketHistory(markets.vix, resolution=resolutions.HOUR_2)
+    mh = MarketHistory(markets.vix, resolution=Resolutions.HOUR_2)
     mh.update(sess)
 
 
@@ -28,16 +28,13 @@ def startup():
 
     STEPS_PER_DAY = 9
 
-    log = []
-    acc = RealAccount(sess, log)
+    acc = RealAccount(sess)
 
     rt = ExpAvgTrader(acc, market_data=vix_market, steps_per_day=STEPS_PER_DAY)
     vix_ds = get_ig_vix_ds()
     rt.warm_up(vix_ds)
 
     rt.decide_actions()
-    for msg in log:
-        print(msg)
 
 if __name__ == "__main__":
 
@@ -53,6 +50,7 @@ if __name__ == "__main__":
             startup()
         except Exception as e:
             print(e)
+        logger.info("Sleeping for 2 hours.")
         time.sleep(7200)
 
 

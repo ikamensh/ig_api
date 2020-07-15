@@ -52,7 +52,7 @@ class RoboTrader:
 
         logger.debug(f"{self.__class__.__name__} updated features via warmup.")
         for k, f in self.features.items():
-            logger.debug(f"{k: >15} = f{f.value:.3f}")
+            logger.debug(f"{k: >15} = {f.value:.3f}")
 
 
     def max_long_amount(self):

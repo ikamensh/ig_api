@@ -24,4 +24,4 @@ def wrap_request(foo):
     return _
 
 requests.get = wrap_request(requests.get)
-requests.get = wrap_request(requests.post)
+requests.post = wrap_request(requests.post)

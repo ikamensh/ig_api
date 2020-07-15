@@ -10,7 +10,6 @@ from credentials import account_id, key, password
 from datasets.historical import get_ig_vix_ds
 from env.real.account import RealAccount
 from robotrader.traders.exp_avg import ExpAvgTrader
-from api.write_history import resolutions
 
 VIX_MIN_PRICE = 10
 VIX_HIGH_PRICE = 110

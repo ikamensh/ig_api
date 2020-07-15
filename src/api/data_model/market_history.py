@@ -6,13 +6,16 @@ from config import data_folder
 import markets
 import datetime
 
+class Resolutions:
+    MINUTE_30 = "MINUTE_30"
+    HOUR_2 = "HOUR_2"
 
 class MarketHistory:
     """ Stores data in .csv files.
 
     Assumes following row format: date, data\n"""
 
-    def __init__(self, market: markets.MarketId, resolution):
+    def __init__(self, market: markets.MarketId, resolution: str):
         self.csv_path = os.path.join(data_folder, f"{market.name}.csv")
         self.market = market
         self.resolution = resolution
@@ -53,7 +56,6 @@ class MarketHistory:
 
 
 if __name__ == "__main__":
-    from api.write_history import resolutions
-    mh = MarketHistory(markets.vix, resolution=resolutions.HOUR_2)
+    mh = MarketHistory(markets.vix, resolution=Resolutions.HOUR_2)
     mh.to_csv()
 

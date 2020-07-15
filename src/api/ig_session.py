@@ -271,3 +271,7 @@ class IgSession:
                 print(
                     f"Used allowance: {init_allowance - rem_allowance}, remaining: {rem_allowance}"
                 )
+
+
+# 'https://demo-api.ig.com/gateway/deal/prices/CC.D.VIX.UME.IP?resolution=HOUR_2&from=2019-07-02T00%3A00%3A00&to=2019-07-03T00%3A00%3A00&pageSize=500'
+# 'https://demo-api.ig.com/gateway/deal/prices/CC.D.VIX.UME.IP?resolution=HOUR_2&from=2019-07-02T00%3A00%3A00&to=2019-07-03T00%3A00%3A00&pageSize=5'

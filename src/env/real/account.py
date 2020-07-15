@@ -1,6 +1,8 @@
 import typing
 import datetime
 
+from loguru import logger
+
 from api.ig_session import IgSession
 from env.abc.account import Account
 from env.real.position import RealPosition
@@ -14,14 +16,13 @@ class RealAccount(Account):
     def __init__(
             self,
             sess: IgSession,
-            log: typing.List = None,
     ):
         self.sess = sess
         self.update_time = datetime.datetime.now()
         acc_details = sess.get_acc_details()
         self._positions = None
         self._profit = acc_details.profit_loss
-        super().__init__(acc_details.balance, log)
+        super().__init__(acc_details.balance)
 
     @property
     def positions(self):
@@ -48,14 +49,14 @@ class RealAccount(Account):
         """
         pos = self.sess.open_position(amt, market)
         self.positions.append(pos)
-        self.log.append(f"Opened position {pos}")
+        logger.info(f"Opened position {pos}")
         return pos
 
     def close(self, position: RealPosition):
         """Close a position at the market price."""
         self.sess.close_position(position)
         self.positions.remove(position)
-        self.log.append(f"Closed position {position}")
+        logger.info(f"Closed position {position}")
 
     def step(self):
         self._positions = None

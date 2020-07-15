@@ -12,10 +12,8 @@ class Account(ABC):
     def __init__(
             self,
             balance: float,
-            log: typing.List = None,
     ):
         self.balance = balance
-        self.log = log
 
     def margin(self):
         """Minimum balance to keep all positions open. """

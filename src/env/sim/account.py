@@ -5,6 +5,8 @@ from env.sim.market_data import SimMarket
 from env.sim.position import SimPosition
 from env.abc.account import Account
 
+from loguru import logger
+
 TAX_RATE = 0.30
 
 
@@ -19,9 +21,8 @@ class SimAccount(Account):
             market_data: SimMarket,
             balance: float,
             steps_per_day: int,
-            log: typing.List = None,
     ):
-        super().__init__(balance, log)
+        super().__init__(balance)
         self.positions = []
         self.market_data = market_data
         self.steps_per_day = steps_per_day
@@ -81,13 +82,12 @@ class SimAccount(Account):
         pos = SimPosition(amt, self.market_data, limit=limit, stop=stop)
         if self.available >= pos.margin():
             self.positions.append(pos)
-            if self.log is not None:
-                self.log.append(f"Opening position {pos}")
-                self.log.append(
-                    f"balance {self.balance:.2f} | "
-                    f"profit {self.profit():.2f} | available {self.available():.2f} | "
-                    f"risk {self.risk():.2f} | margin {self.margin():.2f}"
-                )
+            logger.info(f"Opening position {pos}")
+            logger.debug(
+                f"balance {self.balance:.2f} | "
+                f"profit {self.profit():.2f} | available {self.available:.2f} | "
+                f"risk {self.risk():.2f} | margin {self.margin():.2f}"
+            )
             return pos
         else:
             raise InsufficientFundsException
@@ -97,8 +97,7 @@ class SimAccount(Account):
 
         assert position in self.positions
         profit = position.profit()
-        if self.log is not None:
-            self.log.append(f"Closing position {position} for {profit=:.2f}")
+        logger.info(f"Closing position {position} for {profit=:.2f}")
         self.balance += profit
         self.positions.remove(position)
         self._settle_tax()

@@ -10,6 +10,7 @@ from env.sim.position import Position
 from api.exceptions import LoginError
 from api.data_model.snapshot import Snapshot
 from env.real.market_data import RealMarket
+from loguru import logger
 
 _demo_url = "https://demo-api.ig.com/gateway/deal/"
 
@@ -36,6 +37,7 @@ class IgSession:
 
         self.headers = headers
         self._latest_prices = {}
+        logger.info(f"Successfully logged in as {identifier} to {self.master_url}")
 
     @contextlib.contextmanager
     def use_version(self, version: int):
@@ -170,6 +172,7 @@ class IgSession:
         )
 
     def open_position(self, amount: int, market: str) -> RealPosition:
+        # TODO support limit & stop
         ref = self._open_position(market, amount)
         return self._deal_confirm(ref)
 

@@ -1,5 +1,7 @@
 import time
 
+from loguru import logger
+
 import config
 import markets
 from api.data_model.market_history import MarketHistory
@@ -13,6 +15,7 @@ from api.write_history import resolutions
 VIX_MIN_PRICE = 10
 VIX_HIGH_PRICE = 110
 
+@logger.catch(reraise=True)
 def startup():
     sess = IgSession(account_id, key, password)
 
@@ -38,6 +41,13 @@ def startup():
         print(msg)
 
 if __name__ == "__main__":
+
+    log_format = ("<level>{message: <75}</level> - <green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+                  "<level>{level: <8}</level> | "
+                  "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan>")
+
+    logger.add("startup_{time}.log", format=log_format)
+
     while True:
         try:
             print("tick!")

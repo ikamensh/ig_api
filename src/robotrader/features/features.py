@@ -1,6 +1,8 @@
 import collections
 import typing
 
+from env.real.market_data import RealMarket
+
 if typing.TYPE_CHECKING:
     from env.abc.market_data import MarketData
 
@@ -10,12 +12,15 @@ class Feature:
     last_step: int = 0
     fn: typing.Callable = None
 
-    def update(self, platform: "MarketData"):
+    def update(self, market_data: "MarketData"):
         if isinstance(self.fn, Feature):
-            self.fn.update(platform)
-        if self.last_step < platform.step:
-            self.update_once(platform)
-            self.last_step = platform.step
+            self.fn.update(market_data)
+
+        if isinstance(market_data, RealMarket):
+            self.update_once(market_data)
+        elif self.last_step < market_data.step: # assuming the market data to be SimMarket
+            self.update_once(market_data)
+            self.last_step = market_data.step
 
     def update_once(self, platform: "MarketData"):
         pass

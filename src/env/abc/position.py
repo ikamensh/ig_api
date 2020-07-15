@@ -45,10 +45,10 @@ class Position(ABC):
 
 
     def __repr__(self):
-        result = f"Position in {self.market_data.market_id} | {self.amount:.2f} @ {self.price:.2f}"
+        result = f"{self.__class__.__name__} in {self.market_data.market_id} | {self.amount:.2f} @ {self.price:.2f}"
         if self.limit:
-            result += f" limit: {self.limit}"
+            result += f" limit: {self.limit:.2f}"
         if self.stop:
-            result += f" stop: {self.stop}"
+            result += f" stop: {self.stop:.2f}"
         return result
 

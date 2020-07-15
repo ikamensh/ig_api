@@ -46,11 +46,3 @@ class SimPosition(Position):
             return value * INTEREST_LONG
         else:
             return value * INTEREST_SHORT
-
-    def __repr__(self):
-        result = f"Sim Position in {self.market_data.market_id} | {self.amount:.2f} @ {self.price:.2f}"
-        if self.limit:
-            result += f" limit: {self.limit}"
-        if self.stop:
-            result += f" stop: {self.stop}"
-        return result

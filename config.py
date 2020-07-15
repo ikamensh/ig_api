@@ -13,5 +13,15 @@ src_folder = os.path.join(root, "src")
 sys.path.append(src_folder)
 
 
+from loguru import logger
+import requests
 
+def wrap_request(foo):
+    def _(*args, **kwargs):
+        logger.debug(f"Calling requests.{foo.__name__} with {args=} and {kwargs=}")
+        return foo(*args, **kwargs)
 
+    return _
+
+requests.get = wrap_request(requests.get)
+requests.get = wrap_request(requests.post)

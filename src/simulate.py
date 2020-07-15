@@ -4,6 +4,7 @@ from datasets.fade_over import fadeover_4_years
 from env.sim.account import SimAccount
 from env.sim.market_data import SimMarket
 from robotrader.robotrader import RoboTrader
+from loguru import logger
 
 
 def warm_up(robotrader: RoboTrader, ds):
@@ -15,7 +16,7 @@ def warm_up(robotrader: RoboTrader, ds):
     robotrader._warm_up = old
 
 
-def simulate(rt_cls: ClassVar[RoboTrader], log=None):
+def simulate(rt_cls: ClassVar[RoboTrader]):
     START_BALANCE = 5000
 
     price_dataset = fadeover_4_years()
@@ -26,15 +27,14 @@ def simulate(rt_cls: ClassVar[RoboTrader], log=None):
     for i, (date, low, high) in enumerate(price_dataset):
         market_data.set_prices(low=low, high=high)
         rt.step()
-        if log is not None:
-            log.append(
-                f"{i} {market_data.bid:.2f} {market_data.ask:.2f}  "
-                f"{rt.account.balance + rt.account.profit():.2f} {len(rt.account.positions)}",
-            )
+        logger.info(
+            f"Step {i} - Price {market_data.bid:.2f} / {market_data.ask:.2f}, Account: "
+            f"{rt.account.balance + rt.account.profit():.2f} {len(rt.account.positions)}",
+        )
 
     for p in list(rt.account.positions):
         rt.account.close(p)
 
     # visualize(rt)
 
-    return (rt.account.balance - START_BALANCE) / START_BALANCE, log
+    return (rt.account.balance - START_BALANCE) / START_BALANCE

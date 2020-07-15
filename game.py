@@ -4,33 +4,33 @@ from robotrader.traders.exp_avg import ExpAvgTrader
 from simulate import simulate
 from matplotlib import pyplot as plt
 import time
+from loguru import logger
 
+log_format = "<level>{message: <75}</level> <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan>"
 
 def one_run(i):
-    change, log = simulate(ExpAvgTrader, log=None)
-    # path = f"logs/game_{i}.log"
-    # with open(path, 'w') as f:
-    #     print(os.path.abspath(path))
-    #     f.write(str(change) + '\n')
-    #     for line in log:
-    #         f.write(line + '\n')
-
-    print(i)
+    logger.info(f"Starting run {i}")
+    logger.remove()
+    try:
+        os.remove(f"logs/game_{i}.log")
+    except:
+        pass
+    logger.add(f"logs/game_{i}.log", format=log_format)
+    change = simulate(ExpAvgTrader)
     return change
-
-one_run(1)
 
 if __name__ == "__main__":
     os.makedirs("logs", exist_ok=True)
     t = time.time()
 
-    n_tries = 1000
-    runs = list(range(n_tries))
-
-    import multiprocessing
-
-    pool = multiprocessing.Pool()
-    changes = pool.map(one_run, runs)
+    n_tries = 2
+    if n_tries > 50:
+        runs = list(range(n_tries))
+        import multiprocessing
+        pool = multiprocessing.Pool()
+        changes = pool.map(one_run, runs)
+    else:
+        changes = [one_run(i) for i in range(n_tries)]
     changes.sort()
 
     plt.hist(changes, bins=200)

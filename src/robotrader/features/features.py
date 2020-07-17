@@ -51,7 +51,12 @@ class Pow(Feature):
 
 class ExpAvg(Feature):
     def __init__(self, beta, fn: typing.Callable[["MarketData"], float]):
-        assert 0.5 < beta < 1
+        if beta < 0:
+            beta = abs(beta)
+
+        if not 0.5 < beta < 1:
+            beta = 0.75
+
         self.beta = beta
         self.value = None
         self.fn = fn

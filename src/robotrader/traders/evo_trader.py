@@ -32,7 +32,7 @@ class EvoTrader(RoboTrader):
 
 
     def __init__(self, account, market_data, steps_per_day, *, params = None):
-        super().__init__(account, market_data)
+        super().__init__(account, market_data, steps_per_day)
 
         (
             beta1,
@@ -54,13 +54,11 @@ class EvoTrader(RoboTrader):
             self.fd,
         ) = params or self.random_params()
 
-        def beta_days(days):
-            return 1 - 0.6 / days / steps_per_day
 
-        self.day_dev = expavg_stddev(window=int(steps_per_day * window), smoothing=beta_days(beta3))
+        self.day_dev = expavg_stddev(window=int(self.steps_per_day * window), smoothing=self.beta_days(beta3))
 
-        self.price_avg_30 = ExpAvg(beta=beta_days(beta1), fn=price)
-        self.price_avg_100 = ExpAvg(beta=beta_days(beta2), fn=price)
+        self.price_avg_30 = ExpAvg(beta=self.beta_days(beta1), fn=price)
+        self.price_avg_100 = ExpAvg(beta=self.beta_days(beta2), fn=price)
 
         self.features = {
             "day_dev": self.day_dev,

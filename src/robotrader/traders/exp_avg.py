@@ -6,16 +6,13 @@ from src.robotrader.features.derived_features import expavg_stddev
 
 class ExpAvgTrader(RoboTrader):
     def __init__(self, account, market_data, steps_per_day):
-        super().__init__(account, market_data)
+        super().__init__(account, market_data, steps_per_day)
 
-        def beta_days(days):
-            return 1 - 0.6 / days / steps_per_day
+        self.day_dev = expavg_stddev(window=steps_per_day, smoothing=self.beta_days(30))
+        self.week_dev = expavg_stddev(window=steps_per_day * 5, smoothing=self.beta_days(60))
 
-        self.day_dev = expavg_stddev(window=steps_per_day, smoothing=beta_days(30))
-        self.week_dev = expavg_stddev(window=steps_per_day * 5, smoothing=beta_days(60))
-
-        self.price_avg_30 = ExpAvg(beta=beta_days(30), fn=price)
-        self.price_avg_100 = ExpAvg(beta=beta_days(100), fn=price)
+        self.price_avg_30 = ExpAvg(beta=self.beta_days(30), fn=price)
+        self.price_avg_100 = ExpAvg(beta=self.beta_days(100), fn=price)
 
         self.features = {
             "day_dev": self.day_dev,
@@ -25,10 +22,9 @@ class ExpAvgTrader(RoboTrader):
         }
 
     def decide_actions(self):
-
         free = (
-            self.account.balance - self.account.risk() - self.account.margin()
-        ) / self.account.balance
+                       self.account.balance - self.account.risk() - self.account.margin()
+               ) / self.account.balance
 
         if free < 0.3:
             return
@@ -55,9 +51,11 @@ class ExpAvgTrader(RoboTrader):
                 self.account.close(p)
 
             max_amt = self.max_long_amount()
+            if max_amt < 0:
+                return
             factor = abs(delta) ** 2
             self.account.open(
-                max(1, int(factor * max_amt)),
+                max(3, int(factor * max_amt)),
                 market=self.market_data.market_id,
                 limit=self.market_data.ask * 1.2,
             )
@@ -69,9 +67,11 @@ class ExpAvgTrader(RoboTrader):
                 self.account.close(p)
 
             max_amt = self.max_short_amount()
+            if max_amt < 0:
+                return
             factor = abs(delta) ** 2
             self.account.open(
-                -max(1, int(factor * max_amt)),
+                -max(3, int(factor * max_amt)),
                 market=self.market_data.market_id,
                 limit=self.market_data.bid * 0.8,
             )

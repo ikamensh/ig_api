@@ -16,6 +16,7 @@ class RoboTrader:
     def __init__(self, account: Account, market_data: MarketData, steps_per_day: int = None):
         self.account = account
         self.market_data = market_data
+        self.steps_per_day = steps_per_day
         self.features: typing.Dict[str, Feature] = {}
 
 
@@ -29,7 +30,8 @@ class RoboTrader:
         except CantOpenPosition:
             pass
 
-
+    def beta_days(self, days):
+        return 1 - 0.6 / days / self.steps_per_day
 
     def decide_actions(self):
         raise NotImplementedError

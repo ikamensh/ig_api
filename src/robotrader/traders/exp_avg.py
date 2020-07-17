@@ -9,7 +9,7 @@ class ExpAvgTrader(RoboTrader):
         super().__init__(account, market_data)
 
         def beta_days(days):
-            return 1 - 0.6 / days
+            return 1 - 0.6 / days / steps_per_day
 
         self.day_dev = expavg_stddev(window=steps_per_day, smoothing=beta_days(30))
         self.week_dev = expavg_stddev(window=steps_per_day * 5, smoothing=beta_days(60))

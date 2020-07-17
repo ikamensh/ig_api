@@ -14,13 +14,11 @@ class SimAccount(Account):
     """ Simulated account, performing taxation, ensuring the margin, etc.
 
     Currently supports only a single market positions defined by price_data.market"""
+
     positions: typing.List[SimPosition]
 
     def __init__(
-            self,
-            market_data: SimMarket,
-            balance: float,
-            steps_per_day: int,
+        self, market_data: SimMarket, balance: float, steps_per_day: int,
     ):
         super().__init__(balance)
         self.positions = []
@@ -30,6 +28,8 @@ class SimAccount(Account):
         self.day = 0
         self.year_tax = 0
         self.year_start_balance = balance
+        self._margin = None
+        self._profit = None
 
     def _owed_tax(self):
         """Calculates how much tax is owed this year. """
@@ -49,20 +49,23 @@ class SimAccount(Account):
 
     def margin(self):
         """Minimum balance to keep all positions open. """
-        return sum(p.margin() for p in self.positions)
+        if self._margin is None:
+            self._margin = sum(p.margin() for p in self.positions)
+        return self._margin
 
-    def profit(self, mode="market"):
+    # @functools.lru_cache()
+    # def _cached_profit(self, steps_ctr):
+
+    def profit(self):
         """Total profit / loss (negative profit) from all open positions. """
-        return sum(p.profit(mode=mode) for p in self.positions)
+        if self._profit is None:
+            self._profit = sum(p.profit() for p in self.positions)
+        return self._profit
 
     @property
     def available(self):
         """Free capital in the account. """
-        return (
-                self.balance
-                + min(self.profit(mode) for mode in ["low", "high", "market"])
-                - self.margin()
-        )
+        return self.balance + self.profit() - self.margin()
 
     def open(self, amt: int, market="vix", limit=None, stop=None) -> SimPosition:
         """
@@ -104,6 +107,9 @@ class SimAccount(Account):
 
     def step(self):
         """Time step. Should be called every time prices are updated."""
+        self._profit = None
+        self._margin = None
+
         self._ensure_margin()
         self.stop_limit()
 
@@ -124,32 +130,33 @@ class SimAccount(Account):
             for p in self.positions:
                 self.balance -= days_to_pay * p.daily_cost()
 
+
     def stop_limit(self):
         """ Close positions according to set stops and limits. """
         for p in list(self.positions):
             if p.amount > 0:  # long
                 if p.limit is not None and p.limit <= self.market_data.high_bid:
                     with self.market_data.moment_prices(
-                            bid=p.limit, ask=p.limit + self.market_data.delta
+                        bid=p.limit, ask=p.limit + self.market_data.delta
                     ):
                         self.close(p)
 
                 elif p.stop is not None and p.stop >= self.market_data.low_bid:
                     with self.market_data.moment_prices(
-                            bid=p.stop, ask=p.stop + self.market_data.delta
+                        bid=p.stop, ask=p.stop + self.market_data.delta
                     ):
                         self.close(p)
 
             else:  # short
                 if p.limit is not None and p.limit >= self.market_data.low_ask:
                     with self.market_data.moment_prices(
-                            bid=p.limit - self.market_data.delta, ask=p.limit
+                        bid=p.limit - self.market_data.delta, ask=p.limit
                     ):
                         self.close(p)
 
                 elif p.stop is not None and p.stop < self.market_data.high_ask:
                     with self.market_data.moment_prices(
-                            bid=p.stop - self.market_data.delta, ask=p.stop
+                        bid=p.stop - self.market_data.delta, ask=p.stop
                     ):
                         self.close(p)
 

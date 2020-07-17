@@ -29,7 +29,6 @@ class RoboTrader:
         except CantOpenPosition:
             pass
 
-        self.account.step()
 
 
     def decide_actions(self):
@@ -44,6 +43,7 @@ class RoboTrader:
 
         for _, low, high in ds:
             self.market_data.set_prices(low, high)
+            self.account.step()
             for k, f in self.features.items():
                 f.update(self.market_data)
 

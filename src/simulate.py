@@ -7,25 +7,18 @@ from robotrader.robotrader import RoboTrader
 from loguru import logger
 
 
-def warm_up(robotrader: RoboTrader, ds):
-    old = robotrader._warm_up
-    robotrader._warm_up = True
-    for _, low, high in ds:
-        robotrader.market_data.set_prices(low, high)
-        robotrader.step()
-    robotrader._warm_up = old
-
-
-def simulate(rt_cls: ClassVar[RoboTrader]):
+def simulate(rt_cls: ClassVar[RoboTrader], dataset=None, **kwargs):
     START_BALANCE = 5000
 
-    price_dataset = fadeover_4_years()
+    price_dataset = dataset or fadeover_4_years()
     market_data = SimMarket(delta=price_dataset.delta, market_id="vix")
-    account = SimAccount(balance=START_BALANCE, market_data=market_data, steps_per_day=price_dataset.steps_per_day)
-    rt = rt_cls(account, market_data, price_dataset.steps_per_day)
+    account = SimAccount(balance=START_BALANCE, market_data=market_data,
+                         steps_per_day=price_dataset.steps_per_day)
+    rt = rt_cls(account, market_data, price_dataset.steps_per_day, **kwargs)
 
     for i, (date, low, high) in enumerate(price_dataset):
         market_data.set_prices(low=low, high=high)
+        account.step()
         rt.step()
         logger.info(
             f"Step {i} - Price {market_data.bid:.2f} / {market_data.ask:.2f}, Account: "

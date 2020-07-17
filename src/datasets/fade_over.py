@@ -44,6 +44,11 @@ def fadeover_4_years():
     return fade_over(slices)
 
 
+def fadeover_1_year():
+    slices = [random_slice(years=0.65) for i in range(2)]
+    return fade_over(slices)
+
+
 if __name__ == "__main__":
 
     slices = [random_slice(years=1.5) for i in range(3)]

@@ -16,27 +16,21 @@ class SimPosition(Position):
 
         if amount > 0:
             price = ask
+            self._cost = amount * price
         else:
             price = bid
+            self._win = abs(amount) * price
 
         super().__init__(amount, price, market_data, limit, stop)
 
-    def profit(self, *, mode="market"):
-        if mode == "market":
-            ask, bid = self.market_data.ask, self.market_data.bid
-        elif mode == "high":
-            ask, bid = self.market_data.high_ask, self.market_data.high_bid
-        elif mode == "low":
-            ask, bid = self.market_data.low_ask, self.market_data.low_bid
-        else:
-            raise Exception(f"invalid mode: {mode}")
+    def profit(self):
 
         if self.amount > 0:
-            cost = self.amount * self.price
-            win = self.amount * bid
+            cost = self._cost
+            win = self.amount * self.market_data.bid
         else:
-            win = abs(self.amount) * self.price
-            cost = abs(self.amount) * ask
+            win = self._win
+            cost = abs(self.amount) * self.market_data.ask
         return win - cost
 
     def daily_cost(self):

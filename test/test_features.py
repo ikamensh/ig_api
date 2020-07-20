@@ -6,7 +6,7 @@ def test_exp_avg(price_data):
     f = ExpAvg(0.75, price)
     values = []
     for p in range(25):
-        price_data.set_prices(p, p)
+        price_data.set_prices(p, p, 1)
         f.update(price_data)
         values.append(f.value)
 
@@ -21,7 +21,7 @@ def test_window_var_macro(price_data):
 
     for i in range( int(30 * math.pi) ):
         p = math.sin(i/10)
-        price_data.set_prices(p, p)
+        price_data.set_prices(p, p, 1)
         f.update(price_data)
 
     assert math.isclose(f.value, 4, rel_tol=1e-1)
@@ -32,7 +32,7 @@ def test_window_var_micro(price_data):
 
     for i in range( int(30 * math.pi) ):
         p = math.sin(i/10)
-        price_data.set_prices(1, 2 + p)
+        price_data.set_prices(1, 2 + p, 1)
         f.update(price_data)
 
     assert math.isclose(f.value, 4, rel_tol=1e-1)

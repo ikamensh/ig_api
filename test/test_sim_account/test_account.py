@@ -42,7 +42,7 @@ def test_ensure_margin_long(price_data):
     pos = a.open(1000)
     assert len(a.positions) == 1
 
-    price_data.set_prices(low=1, high=3)
+    price_data.set_prices(low=1, high=3, delta=1)
     a.step()
     assert len(a.positions) == 0
 
@@ -53,6 +53,6 @@ def test_ensure_margin_short(price_data):
     pos = a.open(-1000)
     assert len(a.positions) == 1
 
-    price_data.set_prices(low=21, high=23)
+    price_data.set_prices(low=21, high=23, delta=1)
     a.step()
     assert len(a.positions) == 0

@@ -11,7 +11,7 @@ def fade_over(seq: typing.List[PriceDataset], overlap = 0.15) -> PriceDataset:
     n = len(cur)
     cur_it = iter(cur)
 
-    result = SyntheticDataset(cur.steps_per_day, delta=cur.delta)
+    result = SyntheticDataset(cur.steps_per_day)
 
     while seq:
         nxt = seq.pop()
@@ -21,20 +21,20 @@ def fade_over(seq: typing.List[PriceDataset], overlap = 0.15) -> PriceDataset:
         n_fadeover = int(n * overlap)
         n_pure = n - n_fadeover
         for i in range(n_pure):
-            _, low, high = next(cur_it)
-            result.add_record(low, high)
+            _, low, high, delta = next(cur_it)
+            result.add_record(low, high, delta)
         for i in range(n_fadeover):
-            _, low1, high1 = next(cur_it)
-            _, low2, high2 = next(nxt_it)
+            _, low1, high1, d1 = next(cur_it)
+            _, low2, high2, d2 = next(nxt_it)
             k = i / n_fadeover
-            result.add_record(low1 * (1-k) + low2 * k, high1 * (1-k) + high2 * k)
+            result.add_record(low1 * (1-k) + low2 * k, high1 * (1-k) + high2 * k, d1)
 
         n = len(nxt) - n_fadeover
         cur = nxt
         cur_it = nxt_it
 
-    for _, low, high in cur_it:
-        result.add_record(low, high)
+    for _, low, high, delta in cur_it:
+        result.add_record(low, high, delta)
 
     return result
 

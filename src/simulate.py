@@ -11,13 +11,13 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset=None, **kwargs):
     START_BALANCE = 5000
 
     price_dataset = dataset or fadeover_4_years()
-    market_data = SimMarket(delta=price_dataset.delta, market_id="vix")
+    market_data = SimMarket(market_id="vix")
     account = SimAccount(balance=START_BALANCE, market_data=market_data,
                          steps_per_day=price_dataset.steps_per_day)
     rt = rt_cls(account, market_data, price_dataset.steps_per_day, **kwargs)
 
-    for i, (date, low, high) in enumerate(price_dataset):
-        market_data.set_prices(low=low, high=high)
+    for i, (date, low, high, delta) in enumerate(price_dataset):
+        market_data.set_prices(low=low, high=high, delta=delta)
         account.step()
         rt.step()
         logger.info(

@@ -74,7 +74,7 @@ class ExpAvg(Feature):
 
 class WindowVariance(Feature):
     def __init__(self, n: int):
-        self.memory = collections.deque(maxlen=n*2)
+        self.memory = collections.deque(maxlen=1 + int(abs(n))*2)
 
     def update_once(self, platform: "MarketData"):
         self.memory.extend( low_high(platform) )

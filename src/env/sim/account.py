@@ -130,34 +130,25 @@ class SimAccount(Account):
             for p in self.positions:
                 self.balance -= days_to_pay * p.daily_cost()
 
-
     def stop_limit(self):
         """ Close positions according to set stops and limits. """
         for p in list(self.positions):
             if p.amount > 0:  # long
                 if p.limit is not None and p.limit <= self.market_data.high_bid:
-                    with self.market_data.moment_prices(
-                        bid=p.limit, ask=p.limit + self.market_data.delta
-                    ):
+                    with self.market_data.moment_prices(bid=p.limit, ask=p.limit):
                         self.close(p)
 
                 elif p.stop is not None and p.stop >= self.market_data.low_bid:
-                    with self.market_data.moment_prices(
-                        bid=p.stop, ask=p.stop + self.market_data.delta
-                    ):
+                    with self.market_data.moment_prices(bid=p.stop, ask=p.stop):
                         self.close(p)
 
             else:  # short
                 if p.limit is not None and p.limit >= self.market_data.low_ask:
-                    with self.market_data.moment_prices(
-                        bid=p.limit - self.market_data.delta, ask=p.limit
-                    ):
+                    with self.market_data.moment_prices(bid=p.limit, ask=p.limit):
                         self.close(p)
 
                 elif p.stop is not None and p.stop < self.market_data.high_ask:
-                    with self.market_data.moment_prices(
-                        bid=p.stop - self.market_data.delta, ask=p.stop
-                    ):
+                    with self.market_data.moment_prices(bid=p.stop, ask=p.stop):
                         self.close(p)
 
     def _ensure_margin(self):

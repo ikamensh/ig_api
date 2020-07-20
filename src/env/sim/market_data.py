@@ -5,18 +5,13 @@ from env.abc.market_data import MarketData
 class SimMarket(MarketData):
     """This class stores and centrally updates price data for a single market."""
 
-    def __init__(self, market_id, delta, lowest=None, highest=None):
-        """
-        Args:
-            delta: difference between buying and selling price in the market.
-        """
+    def __init__(self, market_id, lowest=None, highest=None):
         self.high_bid = None
         self.high_ask = None
 
         self.low_bid = None
         self.low_ask = None
 
-        self.delta = delta
         self.step = 0
 
         super().__init__(
@@ -28,18 +23,17 @@ class SimMarket(MarketData):
             highest=highest,
         )
 
-    def set_prices(self, low, high):
+    def set_prices(self, low, high, delta):
         """Sets new price range. """
         assert low <= high
-        self.low_ask = low + self.delta / 2
-        self.low_bid = low - self.delta / 2
+        self.low_ask = low + delta / 2
+        self.low_bid = low - delta / 2
 
-        self.high_ask = high + self.delta / 2
-        self.high_bid = high - self.delta / 2
+        self.high_ask = high + delta / 2
+        self.high_bid = high - delta / 2
 
         self.bid = (self.high_bid + self.low_bid) / 2
         self.ask = (self.high_ask + self.low_ask) / 2
-        self.delta = self.ask - self.bid
         self.step += 1
 
         if self.highest is None:

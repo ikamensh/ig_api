@@ -3,7 +3,7 @@ from typing import Callable, List, Tuple
 
 class PriceDataset:
     # date, low, high
-    data: List[ Tuple[str, float, float] ]
+    data: List[ Tuple[str, float, float, float] ]
     steps_per_day: int
     delta: float
 
@@ -15,9 +15,8 @@ class PriceDataset:
 
 
 class HistoricDataset(PriceDataset):
-    def __init__(self, source, decoder: Callable, steps_per_day, delta):
+    def __init__(self, source, decoder: Callable, steps_per_day):
         self.steps_per_day = steps_per_day
-        self.delta = delta
         with open(source) as f:
             r = csv.reader(f)
             rows = [t for t in r]
@@ -26,14 +25,13 @@ class HistoricDataset(PriceDataset):
 
 
 class SyntheticDataset(PriceDataset):
-    def __init__(self, steps_per_day, delta):
+    def __init__(self, steps_per_day):
         self.steps_per_day = steps_per_day
-        self.delta = delta
         self.ctr = 0
         self.data = []
 
-    def add_record(self, low, high):
-        self.data.append( (f"{self.ctr}", low, high) )
+    def add_record(self, low, high, delta):
+        self.data.append( (f"{self.ctr}", low, high, delta) )
         self.ctr += 1
 
 

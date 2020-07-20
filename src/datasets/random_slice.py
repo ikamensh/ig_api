@@ -42,16 +42,16 @@ def random_slice(years: float):
 
     start = random.randint(0, l - size)
 
-    ds = SyntheticDataset(steps_per_day=4, delta=cboe_vix.delta)
+    ds = SyntheticDataset(steps_per_day=4)
     rate = ds.steps_per_day
 
     for i in range(start, start + size):
-        date, low, high = cboe_vix.data[i]
+        date, low, high, delta = cboe_vix.data[i]
 
         for low_sample, high_sample in upsample(
             low, high, rate
         ):
-            ds.add_record(low_sample, high_sample)
+            ds.add_record(low_sample, high_sample, delta)
 
         if random.random() < 0.2:
             rate = rate - 1 + random.randint(0, 2)

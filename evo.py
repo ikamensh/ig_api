@@ -8,6 +8,7 @@ from blackopt.abc import Problem, Solution
 from blackopt.algorithms import RandomSearch, Gaos
 
 from datasets.fade_over import fadeover_4_years, fadeover_1_year
+from datasets.historical import get_ig_vix_ds, get_ig_vix_eu_ds
 from robotrader.traders.evopot import EvoPotTrader
 from simulate import simulate
 
@@ -19,6 +20,11 @@ info = logger.info
 logger.add("evo.log")
 logger.info = void
 logger.debug = void
+
+real_ds = get_ig_vix_ds()
+ds_eu = get_ig_vix_eu_ds()
+print(len(real_ds))
+print(len(ds_eu))
 
 
 class VixTradingSolution(Solution):
@@ -69,6 +75,15 @@ class VixTradingProblem(Problem):
         # Idea: trials, try on 10 -> 100 -> 1000 datasets, try next only if excellent on prev.
 
         self.eval_count += 1
+
+        vix_score = simulate(EvoPotTrader, real_ds, params = s.params)
+        eu_score = simulate(EvoPotTrader, ds_eu, params = s.params)
+        real_score = min(vix_score, eu_score)
+        real_score -= 0.1
+        if real_score < 0:
+            info(f"{self.eval_count: >4}, {real_score=:.3f}")
+            return real_score * 10_000 - 10_000
+
         n_tries = len(self.datasets)
         # datasets = random.sample(self.datasets, n_tries)
         self.datasets.append(fadeover_4_years())
@@ -85,9 +100,9 @@ class VixTradingProblem(Problem):
         n_negative = len([c for c in changes if c <0])
         changes = [-(abs(c) ** 2) * 1000 if c < 0 else c for c in changes]
         avg = sum(changes) / n_tries
-        info(f"{self.eval_count: >4}, {median: >6.2f}, {avg: >7.1f}, {n_negative: >2}, {s.params}")
+        info(f"{self.eval_count: >4}, {real_score=:.3f}, {median: >6.2f}, {avg: >7.1f}, {n_negative: >2}, {s.params}")
 
-        return median + avg
+        return median + avg + real_score
 
     def __init__(self):
         self.datasets = collections.deque([fadeover_4_years() for i in range(50)], maxlen=50)
@@ -98,7 +113,7 @@ class VixTradingProblem(Problem):
 def main(number):
     p = VixTradingProblem()
     # solver = RandomSearch(p, VixTradingSolution)
-    solver = Gaos(p, VixTradingSolution, popsize=30, mutation_rate=0.8, equal_chances=0.01)
+    solver = Gaos(p, VixTradingSolution, popsize=50, mutation_rate=0.8)
     solver.solve(number)
     print(solver.best_solution.params)
     generate_report(p, {solver: solver.metrics})
@@ -110,9 +125,17 @@ if __name__ == "__main__":
     # profiler = Profile()
     # profiler.runcall(main)
     # profiler.print_stats('cumulative')
+    for i in range(4):
+        import time
+
+        t = time.time()
+        main(30_000)
+
+        print(f"{time.time() - t:.2f}")
+
     import time
 
     t = time.time()
-    main(50_000)
+    main(100_000)
 
     print(f"{time.time() - t:.2f}")

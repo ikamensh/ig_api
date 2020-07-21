@@ -77,5 +77,5 @@ class EvoPotTrader(PotentialTrader):
             "price_avg_short": self.price_avg_short,
             "price_avg": self.price_avg,
             "momentum_short": self.momentum_short,
-            "price_momentum": self.momentum,
+            "momentum": self.momentum,
         }

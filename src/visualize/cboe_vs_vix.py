@@ -1,7 +1,5 @@
 import datetime
 
-from bokeh.plotting import figure, output_file, show
-
 import markets
 from api.data_model.market_history import MarketHistory
 
@@ -42,10 +40,11 @@ print(len(ig_compressed))
 x = list(range(len(cboe_slice)))
 
 # output_file("lines.html")
+from bokeh.plotting import figure, show
+
 p = figure(title="simple line example", x_axis_label='x', y_axis_label='y')
 
 p.line(x, ig_compressed, legend_label="ig_compressed", line_width=1, color="red")
 p.line(x, cboe_values, legend_label="cboe_values", line_width=1, color="green")
 
-# show the results
 show(p)

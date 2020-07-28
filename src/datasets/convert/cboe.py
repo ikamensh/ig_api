@@ -1,5 +1,5 @@
 from datasets.market_history import MarketHistory
-from markets import vix_official
+from markets import cboe_vix
 import datetime
 
 def cboe_value(s):
@@ -17,7 +17,7 @@ import csv
 
 path = os.path.join(data_folder, "vix_original.csv")
 
-md = MarketHistory(vix_official)
+md = MarketHistory(cboe_vix)
 
 with open(path) as f:
     r = csv.reader(f)

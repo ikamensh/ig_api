@@ -1,17 +1,8 @@
-from datasets.market_history import MarketHistory
 import markets
 import datetime
-
-def cboe_value(s):
-    _open, high, low, _close = s
-    low, high = float(low), float(high)
-    if low > 25:
-        delta = 0.2
-    else:
-        delta = 0.1
-    return low, high, delta
-
 import csv
+
+from datasets.market_history import MarketHistory
 
 
 def iter_my_format(rows):

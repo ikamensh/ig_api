@@ -45,13 +45,14 @@ class MarketHistory:
         self._end = srtd[-1][0] if self._data else None
         self._data = {k:v for k, v in sorted(self._data.items())}
 
-        days = [datetime.datetime(year=k.year, month=k.month, day=k.day) for k in self._data]
-        ctr = Counter(days)
-        self.steps_per_day = ctr[ctr.most_common()[0]]
+        if srtd:
+            days = [datetime.datetime(year=k.year, month=k.month, day=k.day) for k in self._data]
+            ctr = Counter(days)
+            self.steps_per_day = ctr[ctr.most_common()[0]]
 
         self._dirty_bit = False
 
-    def add_record(self, *, date_time: datetime.datetime, low: float, high: float, delta: float):
+    def add_record(self, date_time: datetime.datetime, low: float, high: float, delta: float):
         """ Add a single record. """
 
         self._dirty_bit = True
@@ -77,7 +78,7 @@ class MarketHistory:
                 d = parse_date(timestamp)
                 result._data[d] = low, high, delta
 
-            result.compute_start_end_step()
+        result.compute_start_end_step()
 
         return result
 
@@ -109,12 +110,14 @@ class MarketHistory:
         """ Discard all records outside of the slice window defined by start and end. """
 
         assert start or end, "To construct a slice, provide one or both of [start, end]."
+        if start and end:
+            assert start < end
         new = MarketHistory(self.market)
 
         for k, v in self._data.items():
             if start and k < start:
                 continue
-            if end and k > end:
+            if end and k >= end:
                 continue
             new.add_record(k, *v)
 
@@ -171,7 +174,7 @@ class MarketHistory:
 if __name__ == "__main__":
     mh_ig = MarketHistory(markets.vix)
 
-    mh_official = MarketHistory(markets.vix_official)
+    mh_official = MarketHistory(markets.cboe_vix)
 
     for a, b in mh_ig:
         pass

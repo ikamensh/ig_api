@@ -1,21 +1,30 @@
-from datasets.price_dataset import SyntheticDataset
-from datasets.historical import cboe_vix
-
+from datetime import datetime, timedelta
 import random
 
+from datasets.historical import cboe_vix
+from datasets.market_history import MarketHistory
 
-def upsample(low, high, times):
+
+def upsample(low: float, high: float, k: int):
+    """create k samples that lie between low and high values. """
+    assert high >= low
+    assert k > 0
+
+    if k == 1:
+        yield from [ (low, high) ]
+        return
+
     seen_low = False
     seen_high = False
 
-    for sample in range(times - 1):
-        if random.random() < 1 / times:
+    for sample in range(k - 1):
+        if random.random() < 1 / k:
             low_s = low
             seen_low = True
         else:
             low_s = low + (high - low) * random.random()
 
-        if random.random() < 1 / times:
+        if random.random() < 1 / k:
             high_s = high
             seen_high = True
         else:
@@ -35,41 +44,55 @@ def upsample(low, high, times):
     yield low_s, high_s
 
 
-def random_slice(years: float):
+def random_slice(years: float, source: MarketHistory = cboe_vix, resolution: int = 4):
+    """ Take a random slice of a given dataset of given length.
 
-    l = len(cboe_vix)
-    size = int(365 * 5 / 7 * years) * cboe_vix.steps_per_day
+    Adds random compression/dilation on time axis.
+
+    Args:
+        resolution: how many steps per day of data to use.
+
+    """
+    l = len(source)
+    size = int(365 * 5 / 7 * years) * source.steps_per_day
 
     start = random.randint(0, l - size)
 
-    ds = SyntheticDataset(steps_per_day=4)
-    rate = ds.steps_per_day
+    result = MarketHistory()
+    rate = max(resolution // source.steps_per_day, 1)
+
+    date_time = datetime(year=1970, month=1, day=1)
+
+    seq = list(source)
+    min_rate = max(1, resolution - 2)
+    max_rate = resolution + 2
 
     for i in range(start, start + size):
-        date, low, high, delta = cboe_vix.data[i]
+        low, high, delta = seq[i]
 
-        for low_sample, high_sample in upsample(
-            low, high, rate
-        ):
-            ds.add_record(low_sample, high_sample, delta)
+        for low_sample, high_sample in upsample(low, high, rate):
+            result.add_record(date_time, low_sample, high_sample, delta)
+            date_time += timedelta(days=1)
 
         if random.random() < 0.2:
             rate = rate - 1 + random.randint(0, 2)
-            rate = max( rate, ds.steps_per_day - 1)
-            rate = min( rate, ds.steps_per_day + 1)
+            rate = max(rate, min_rate)
+            rate = min(rate, max_rate)
 
-    return ds
+    result.compute_start_end_step()
+    result.steps_per_day = resolution
+    return result
 
 
 if __name__ == "__main__":
     ds = random_slice(years=3)
-    print(len(ds) / (52.3 * (ds.steps_per_day*5) ) )
+    print(len(ds) / (52.3 * (ds.steps_per_day * 5)))
 
     from matplotlib import pyplot as plt
-    prices = [sum(d[1:])/2 for d in ds]
+
+    prices = [sum(d[:2]) / 2 for d in ds]
 
     plt.plot(prices)
     plt.grid()
     plt.title("Prices")
     plt.show()
-

@@ -51,14 +51,18 @@ def match(source: MarketHistory, target: MarketHistory) -> MarketHistory:
         deltas = [t[0] for t in lst]
         return min(lows), max(highs), sum(deltas) / len(deltas)
 
+    last = None
     for k in target._data:
         while items[ptr_ig][0] < k and ptr_ig < len(items):
             temp.append(items[ptr_ig][1])
             ptr_ig += 1
 
         if temp:
-            result.add_record(k, *compressed(temp))
+            last = compressed(temp)
+            result.add_record(k, *last)
             temp = []
+        else:
+            result.add_record(k, *last)
     return result
 
 

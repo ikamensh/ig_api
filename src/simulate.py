@@ -16,7 +16,7 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset=None, **kwargs):
                          steps_per_day=price_dataset.steps_per_day)
     rt = rt_cls(account, market_data, price_dataset.steps_per_day, **kwargs)
 
-    for i, (date, low, high, delta) in enumerate(price_dataset):
+    for i, (low, high, delta) in enumerate(price_dataset):
         market_data.set_prices(low=low, high=high, delta=delta)
         account.step()
         rt.step()

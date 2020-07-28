@@ -2,12 +2,11 @@ import time
 
 from loguru import logger
 
-import config
 import markets
-from api.data_model.market_history import MarketHistory, Resolutions
+from datasets.historical import ig_vix
+from datasets.market_history import MarketHistory, Resolutions
 from api.ig_session import IgSession
 from credentials import account_id, key, password
-from datasets.historical import get_ig_vix_ds
 from env.real.account import RealAccount
 from robotrader.traders.exp_avg import ExpAvgTrader
 
@@ -18,11 +17,11 @@ VIX_HIGH_PRICE = 110
 def startup():
     sess = IgSession(account_id, key, password)
 
-    mh = MarketHistory(markets.vix, resolution=Resolutions.HOUR_2)
+    mh = MarketHistory.from_csv(markets.vix)
     mh.update(sess)
 
 
-    vix_market = sess.get_market_data(markets.VIX)
+    vix_market = sess.get_market_data(markets._VIX)
     vix_market.lowest = VIX_MIN_PRICE
     vix_market.highest = VIX_HIGH_PRICE
 
@@ -31,8 +30,7 @@ def startup():
     acc = RealAccount(sess)
 
     rt = ExpAvgTrader(acc, market_data=vix_market, steps_per_day=STEPS_PER_DAY)
-    vix_ds = get_ig_vix_ds()
-    rt.warm_up(vix_ds)
+    rt.warm_up(mh)
 
     rt.decide_actions()
 

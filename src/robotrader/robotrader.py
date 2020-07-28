@@ -1,7 +1,8 @@
 import typing
 from loguru import logger
 
-from datasets.price_dataset import PriceDataset
+
+from datasets.market_history import MarketHistory
 from env.abc.account import Account
 from env.abc.market_data import MarketData
 from env.exceptions import CantOpenPosition
@@ -36,15 +37,15 @@ class RoboTrader:
     def decide_actions(self):
         raise NotImplementedError
 
-    def warm_up(self, ds: PriceDataset):
+    def warm_up(self, ds: MarketHistory):
         logger.info(f"Running warmup on {ds}")
         logger.disable(__name__)
         old_market_data = self.market_data
 
-        self.market_data = SimMarket(ds, ds.delta)
+        self.market_data = SimMarket(ds)
 
-        for _, low, high in ds:
-            self.market_data.set_prices(low, high)
+        for low, high, delta in ds:
+            self.market_data.set_prices(low, high, delta)
             self.account.step()
             for k, f in self.features.items():
                 f.update(self.market_data)

@@ -7,6 +7,7 @@ from api.ig_session import IgSession
 from config import data_folder
 import markets
 import datetime
+from loguru import logger
 
 
 class Resolutions:
@@ -19,6 +20,7 @@ class Resolutions:
 def parse_date(timestamp: str) -> datetime.datetime:
     return datetime.datetime.fromisoformat(timestamp)
 
+synth_market_id = markets.MarketId(code=None, name="synthetic_data")
 
 class MarketHistory:
     """ Represents available historic data for a given market.
@@ -29,7 +31,7 @@ class MarketHistory:
         3) slicing data based on datetime
     """
 
-    def __init__(self, market: markets.MarketId):
+    def __init__(self, market: markets.MarketId = synth_market_id):
         self.csv_path = os.path.join(data_folder, f"{market.name}.csv")
         self.market = market
         self._data: Dict[datetime, Tuple[float, float, float]] = {}
@@ -48,7 +50,7 @@ class MarketHistory:
         if srtd:
             days = [datetime.datetime(year=k.year, month=k.month, day=k.day) for k in self._data]
             ctr = Counter(days)
-            self.steps_per_day = ctr[ctr.most_common()[0]]
+            self.steps_per_day = ctr.most_common()[0][1]  # take the most common tuple, second element is the count
 
         self._dirty_bit = False
 
@@ -67,7 +69,8 @@ class MarketHistory:
         result = MarketHistory(market)
 
         if not os.path.exists(result.csv_path):
-            raise FileNotFoundError
+            logger.warning(f"File {result.csv_path} doesn't exist - using empty MarketHistory.")
+            return result
 
         with open(result.csv_path) as f:
             r = csv.reader(f)

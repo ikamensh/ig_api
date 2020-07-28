@@ -254,24 +254,27 @@ class IgSession:
                 reply = r.json()
                 if "prices" in reply:
                     for p in reply["prices"]:
-                        t = p["snapshotTimeUTC"]
+                        timestamp = p["snapshotTimeUTC"]
 
-                        elem = (
-                            t,
+                        prices = [
                             p["lowPrice"]["bid"],
                             p["lowPrice"]["ask"],
                             p["highPrice"]["bid"],
                             p["highPrice"]["ask"],
-                        )
-                        if all(x is not None for x in elem):
-                            yield elem
+                        ]
+                        if None in prices:
+                            continue
+
+                        prices = [float(x) for x in prices]
+                        lb, la, hb, ha = prices
+                        delta = ha - hb
+                        low = (lb + la) / 2
+                        high = (hb + ha) / 2
+
+                        yield timestamp, low, high, delta
 
             else:
                 rem_allowance = r.json()["metadata"]["allowance"]["remainingAllowance"]
                 print(
                     f"Used allowance: {init_allowance - rem_allowance}, remaining: {rem_allowance}"
                 )
-
-
-# 'https://demo-api.ig.com/gateway/deal/prices/CC.D.VIX.UME.IP?resolution=HOUR_2&from=2019-07-02T00%3A00%3A00&to=2019-07-03T00%3A00%3A00&pageSize=500'
-# 'https://demo-api.ig.com/gateway/deal/prices/CC.D.VIX.UME.IP?resolution=HOUR_2&from=2019-07-02T00%3A00%3A00&to=2019-07-03T00%3A00%3A00&pageSize=5'

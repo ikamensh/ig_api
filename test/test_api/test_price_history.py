@@ -2,7 +2,7 @@ import types
 import datetime
 
 import markets
-from api.data_model.market_history import Resolutions
+from datasets.market_history import Resolutions
 
 
 def test_price_history(sess):

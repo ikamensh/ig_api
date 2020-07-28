@@ -1,9 +1,11 @@
 import typing
-from datasets.price_dataset import PriceDataset, SyntheticDataset
+from datetime import datetime, timedelta
+
+from datasets.market_history import MarketHistory
 from datasets.random_slice import random_slice
 
 
-def fade_over(seq: typing.List[PriceDataset], overlap = 0.15) -> PriceDataset:
+def fade_over(seq: typing.List[MarketHistory], overlap = 0.15) -> MarketHistory:
     assert len(seq) > 1, "Seq must be a sequence of PriceDataset objects, optimally about a year lenght"
 
 
@@ -11,7 +13,14 @@ def fade_over(seq: typing.List[PriceDataset], overlap = 0.15) -> PriceDataset:
     n = len(cur)
     cur_it = iter(cur)
 
-    result = SyntheticDataset(cur.steps_per_day)
+    result = MarketHistory()
+    date_time = datetime(year=1970, month=1, day=1)
+
+    def add_record(low, high, delta):
+        nonlocal date_time
+        result.add_record(date_time, low, high, delta)
+        date_time += timedelta(days=1)
+
 
     while seq:
         nxt = seq.pop()
@@ -21,20 +30,24 @@ def fade_over(seq: typing.List[PriceDataset], overlap = 0.15) -> PriceDataset:
         n_fadeover = int(n * overlap)
         n_pure = n - n_fadeover
         for i in range(n_pure):
-            _, low, high, delta = next(cur_it)
-            result.add_record(low, high, delta)
+            low, high, delta = next(cur_it)
+            add_record(low, high, delta)
+
         for i in range(n_fadeover):
-            _, low1, high1, d1 = next(cur_it)
-            _, low2, high2, d2 = next(nxt_it)
+            low1, high1, d1 = next(cur_it)
+            low2, high2, d2 = next(nxt_it)
             k = i / n_fadeover
-            result.add_record(low1 * (1-k) + low2 * k, high1 * (1-k) + high2 * k, d1)
+            add_record(low1 * (1-k) + low2 * k, high1 * (1-k) + high2 * k, d1)
 
         n = len(nxt) - n_fadeover
         cur = nxt
         cur_it = nxt_it
 
-    for _, low, high, delta in cur_it:
-        result.add_record(low, high, delta)
+    for low, high, delta in cur_it:
+        add_record(low, high, delta)
+
+    result.compute_start_end_step()
+    result.steps_per_day = cur.steps_per_day
 
     return result
 
@@ -55,7 +68,7 @@ if __name__ == "__main__":
     ds = fade_over(slices)
 
     from matplotlib import pyplot as plt
-    prices = [sum(d[1:])/2 for d in ds]
+    prices = [sum(d[:2])/2 for d in ds]
 
     plt.plot(prices)
     plt.grid()

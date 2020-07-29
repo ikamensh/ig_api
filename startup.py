@@ -17,20 +17,18 @@ VIX_HIGH_PRICE = 110
 def startup():
     sess = IgSession(account_id, key, password)
 
-    mh = MarketHistory.from_csv(markets.vix)
-    mh.update(sess)
-
+    history = MarketHistory.from_csv(markets.vix)
+    history.update(sess)
 
     vix_market = sess.get_market_data(markets._VIX)
     vix_market.lowest = VIX_MIN_PRICE
     vix_market.highest = VIX_HIGH_PRICE
 
-    STEPS_PER_DAY = 9
 
     acc = RealAccount(sess)
 
-    rt = ExpAvgTrader(acc, market_data=vix_market, steps_per_day=STEPS_PER_DAY)
-    rt.warm_up(mh)
+    rt = ExpAvgTrader(acc, market_data=vix_market, steps_per_day=history.steps_per_day)
+    rt.warm_up(history)
 
     rt.decide_actions()
 

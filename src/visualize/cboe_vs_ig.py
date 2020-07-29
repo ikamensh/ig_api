@@ -1,8 +1,12 @@
-import datetime
-from typing import Dict, Tuple, List
+"""
+Visualize comparison of official CBOE price data for .vix vs IG.com price data.
+"""
+
+from typing import Tuple, List
 
 import markets
 from datasets.market_history import MarketHistory
+from datasets.historical import add_averaging
 
 
 def plot():
@@ -10,21 +14,21 @@ def plot():
     cboe_history = MarketHistory.from_csv(markets.cboe_vix)
     cboe_history = cboe_history.slice(start=ig_history.start, end=ig_history.end)
 
+    cboe_adapted = MarketHistory.from_csv(markets.cboe_vix)
+    add_averaging(cboe_adapted)
+    cboe_adapted = cboe_adapted.slice(start=ig_history.start, end=ig_history.end)
+
     print("CBOE", cboe_history.start, cboe_history.end)
     print("IG", ig_history.start, ig_history.end)
 
     ig_compressed = match(ig_history, cboe_history)
     ig_compressed = [(low + high) / 2 for low, high, delta in ig_compressed]
     cboe_values = [(low + high) / 2 for low, high, delta in cboe_history]
+    adapted_values = [(low + high) / 2 for low, high, delta in cboe_adapted]
 
-
-    print(len(ig_history))
-    print(len(cboe_values))
-    print(len(ig_compressed))
 
     x = list(range(len(cboe_values)))
 
-    # output_file("lines.html")
     from bokeh.plotting import figure, show
 
     p = figure(
@@ -33,6 +37,8 @@ def plot():
 
     p.line(x, ig_compressed, legend_label="ig_compressed", line_width=1, color="red")
     p.line(x, cboe_values, legend_label="cboe_values", line_width=1, color="green")
+    p.line(x, adapted_values, legend_label="cboe_adapted", line_width=1, color="black")
+
 
     show(p)
 

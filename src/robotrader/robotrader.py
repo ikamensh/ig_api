@@ -12,14 +12,14 @@ if typing.TYPE_CHECKING:
     from robotrader.features.features import Feature
 
 
-
 class RoboTrader:
-    def __init__(self, account: Account, market_data: MarketData, steps_per_day: int = None):
+    def __init__(
+        self, account: Account, market_data: MarketData, steps_per_day: int = None
+    ):
         self.account = account
         self.market_data = market_data
         self.steps_per_day = steps_per_day
         self.features: typing.Dict[str, Feature] = {}
-
 
     def step(self):
         logger.debug(f"{self.__class__.__name__} is updating features.")
@@ -38,7 +38,9 @@ class RoboTrader:
         raise NotImplementedError
 
     def warm_up(self, ds: MarketHistory):
-        logger.info(f"Running warmup on {ds}")
+        logger.info(
+            f"Running warmup on {ds} ({len(ds)=}, {ds.steps_per_day=}, {ds.start=}, {ds.end=})"
+        )
         logger.disable(__name__)
         old_market_data = self.market_data
 
@@ -57,14 +59,12 @@ class RoboTrader:
         for k, f in self.features.items():
             logger.debug(f"{k: >15} = {f.value:.3f}")
 
-
     def max_long_amount(self):
 
         free_money = self.account.balance - self.account.risk()
         risk_per_unit = self.market_data.ask - self.market_data.lowest
 
         return free_money / risk_per_unit
-
 
     def max_short_amount(self):
         free_money = self.account.balance - self.account.risk()

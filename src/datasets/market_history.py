@@ -42,6 +42,7 @@ class MarketHistory:
 
     def compute_start_end_step(self):
         """ Housekeeping - sort the data, find earliest and latest datetime, detect steps per day. """
+
         srtd = sorted(self._data.items())
         self._start = srtd[0][0] if self._data else None
         self._end = srtd[-1][0] if self._data else None
@@ -147,37 +148,33 @@ class MarketHistory:
     def __len__(self):
         return len(self._data)
 
-    # def add_averaging(self) -> None:
-    #
-    #     items = [(k, v) for k, v in sorted(self.data.items())]
-    #     values =
-    #
-    #     days_fast = 5
-    #     beta_fast = 1 - 0.6 / days_fast
-    #     avg_fast = sum((l + h) / 2 for _, l, h, _ in dataset.data[:100])
-    #
-    #     days_slow = 150
-    #     beta_slow = 1 - 0.6 / days_slow
-    #     avg_slow = sum((l + h) / 2 for _, l, h, _ in dataset.data[:500])
-    #
-    #     for date, low, high, delta in dataset.data:
-    #         avg_fast = avg_fast * beta_fast + (low + high) / 2 * (1 - beta_fast)
-    #
-    #         avg_slow = avg_slow * beta_slow + (low + high) / 2 * (1 - beta_slow)
-    #
-    #         result.add_record(
-    #             (2 * low + avg_fast + avg_slow) / 4,
-    #             (2 * high + avg_fast + avg_slow) / 4,
-    #             delta,
-    #         )
-    #
-    #     return result
+
+
+    def plot(self):
+        from matplotlib import pyplot as plt
+
+        prices = [(low + high) / 2 for low, high, delta in self]
+        plt.plot(prices)
+        plt.grid()
+        plt.title("Prices")
+        plt.show()
+
 
 
 if __name__ == "__main__":
-    mh_ig = MarketHistory(markets.vix)
 
-    mh_official = MarketHistory(markets.cboe_vix)
+    adapted = MarketHistory.from_csv(markets.cboe_vix)
+    adapted.add_averaging()
 
-    for a, b in mh_ig:
-        pass
+    original = MarketHistory.from_csv(markets.cboe_vix)
+
+    from matplotlib import pyplot as plt
+
+    prices_smooth = [(low + high) / 2 for low, high, delta in adapted]
+    prices_original = [(low + high) / 2 for low, high, delta in original]
+    plt.plot(prices_smooth, label="adapted")
+    plt.plot(prices_original, label="original")
+    plt.grid()
+    plt.title("Prices")
+    plt.legend()
+    plt.show()

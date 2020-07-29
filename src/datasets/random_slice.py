@@ -87,12 +87,3 @@ def random_slice(years: float, source: MarketHistory = cboe_vix, resolution: int
 if __name__ == "__main__":
     ds = random_slice(years=3)
     print(len(ds) / (52.3 * (ds.steps_per_day * 5)))
-
-    from matplotlib import pyplot as plt
-
-    prices = [sum(d[:2]) / 2 for d in ds]
-
-    plt.plot(prices)
-    plt.grid()
-    plt.title("Prices")
-    plt.show()

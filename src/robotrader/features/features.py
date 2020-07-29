@@ -85,14 +85,15 @@ class WindowVariance(Feature):
 
 
 class Momentum(Feature):
-    def __init__(self, fn):
+    def __init__(self, fn, steps_per_day):
         self.fn = fn
         self.last_val = None
         self.value = 0
+        self.steps_per_day = steps_per_day
 
     def update_once(self, platform: "MarketData"):
         if self.last_val:
-            self.value = self.fn(platform) - self.last_val
+            self.value = self.steps_per_day * (self.fn(platform) - self.last_val)
         self.last_val = self.fn(platform)
 
 

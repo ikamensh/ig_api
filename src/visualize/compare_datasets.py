@@ -8,8 +8,9 @@ from bokeh.plotting import figure, show
 import markets
 from datasets.market_history import MarketHistory
 from env.sim.market_data import SimMarket
+from robotrader.features.derived_features import expavg_stddev
 from robotrader.features.features import Feature, price, ExpAvg, Momentum
-from visualize.cboe_vs_vix import match
+from visualize.cboe_vs_ig import match
 
 
 def vis_features(features: Dict[str, Feature], ds1: MarketHistory, ds2: MarketHistory):
@@ -54,11 +55,9 @@ def _plot_features(ds: MarketHistory, features, fig, suffix):
 
 
 if __name__ == "__main__":
-    ig_history = MarketHistory.from_csv(markets.vix)
-    cboe_history = MarketHistory.from_csv(markets.cboe_vix)
-    cboe_history = cboe_history.slice(start=ig_history.start, end=ig_history.end)
-
-    ig_compressed = match(ig_history, cboe_history)
+    from datasets.historical import ig_vix, cboe_vix
+    cboe_history = cboe_vix.slice(start=ig_vix.start, end=ig_vix.end)
+    ig_compressed = match(ig_vix, cboe_history)
 
     def beta_days(days):
         return 1 - 0.6 / days
@@ -66,8 +65,8 @@ if __name__ == "__main__":
     feats = {
         # "daily_dev": expavg_stddev(window=1, smoothing=beta_days(30)),
         # "weekly_dev": expavg_stddev(window=5, smoothing=beta_days(30)),
-        "exp_avg": ExpAvg(beta=beta_days(30), fn=price),
-        "momentum": ExpAvg(beta=beta_days(30), fn=Momentum(price))
+        # "exp_avg": ExpAvg(beta=beta_days(30), fn=price),
+        "momentum": ExpAvg(beta=beta_days(30), fn=Momentum(price, steps_per_day=1))
     }
     print(len(ig_compressed), len(cboe_history))
     vis_features(feats, cboe_history, ig_compressed)

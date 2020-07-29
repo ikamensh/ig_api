@@ -146,7 +146,7 @@ class IgSession:
         r = requests.get(
             url=f"{trade_confirm_url}/{deal_reference}", headers=self.headers
         )
-        assert r.status_code == 200
+        assert r.status_code == 200, r.text
 
         reply = r.json()
         status, reason = reply["dealStatus"], reply["reason"]
@@ -195,7 +195,7 @@ class IgSession:
         else:
             body["direction"] = "SELL"
 
-        with self.use_method("DELETE"):
+        with self.use_method("DELETE"), self.use_version(1):
             r = requests.post(url=otc_url, headers=self.headers, json=body)
 
         assert r.status_code == 200, r.text

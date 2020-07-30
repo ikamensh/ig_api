@@ -9,7 +9,7 @@ demo_password = "BoringPassword123"
 
 def test_login():
     sess = IgSession(demo_account_id, demo_key, demo_password)
-    assert sess.headers["x-security-token"]
+    assert sess._headers["x-security-token"]
 
 
 def test_login_bad_password():

@@ -5,10 +5,8 @@ from typing import Dict
 from bokeh.colors.util import NamedColor
 from bokeh.plotting import figure, show
 
-import markets
 from datasets.market_history import MarketHistory
-from env.sim.market_data import SimMarket
-from robotrader.features.derived_features import expavg_stddev
+from sim._sim_market_data import SimMarket
 from robotrader.features.features import Feature, price, ExpAvg, Momentum
 from visualize.cboe_vs_ig import match
 

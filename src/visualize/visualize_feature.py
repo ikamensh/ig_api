@@ -5,7 +5,7 @@ from bokeh.colors.util import NamedColor
 from bokeh.plotting import figure, show
 
 from datasets.price_dataset import PriceDataset
-from env.sim.market_data import SimMarket
+from sim._sim_market_data import SimMarket
 from robotrader.features.features import Feature, price
 
 

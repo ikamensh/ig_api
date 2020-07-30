@@ -129,13 +129,13 @@ class MarketHistory:
         return new
 
     @property
-    def start(self):
+    def start(self) -> datetime.datetime:
         if self._dirty_bit:
             self.compute_start_end_step()
         return self._start
 
     @property
-    def end(self):
+    def end(self) -> datetime.datetime:
         if self._dirty_bit:
             self.compute_start_end_step()
         return self._end
@@ -145,8 +145,17 @@ class MarketHistory:
             self.compute_start_end_step()
         return iter(self._data.values())
 
+    def keys(self):
+        return self._data.keys()
+
+    def items(self):
+        return self._data.items()
+
     def __len__(self):
         return len(self._data)
+
+    def __getitem__(self, item):
+        return self._data[item]
 
 
 
@@ -164,7 +173,7 @@ class MarketHistory:
 if __name__ == "__main__":
 
     adapted = MarketHistory.from_csv(markets.cboe_vix)
-    adapted.add_averaging()
+    # adapted.add_averaging()
 
     original = MarketHistory.from_csv(markets.cboe_vix)
 

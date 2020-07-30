@@ -1,27 +1,27 @@
+import collections
 import typing
 
-from env.exceptions import InsufficientFundsException
-from env.sim.market_data import SimMarket
-from env.sim.position import SimPosition
-from env.abc.account import Account
+from exceptions import InsufficientFundsException
+from sim._sim_market_data import SimMarket
 
 from loguru import logger
+
+from api.data_model.position import Position
 
 TAX_RATE = 0.30
 
 
-class SimAccount(Account):
+class SimAccount:
     """ Simulated account, performing taxation, ensuring the margin, etc.
 
     Currently supports only a single market positions defined by price_data.market"""
 
-    positions: typing.List[SimPosition]
 
     def __init__(
         self, market_data: SimMarket, balance: float, steps_per_day: int,
     ):
-        super().__init__(balance)
-        self.positions = []
+        self.balance = balance
+        self.positions: typing.List[Position] = []
         self.market_data = market_data
         self.steps_per_day = steps_per_day
         self.steps_counter = 0
@@ -30,6 +30,17 @@ class SimAccount(Account):
         self.year_start_balance = balance
         self._margin = None
         self._profit = None
+
+    def assets(self) -> typing.Dict[str, int]:
+        """Total amount of the assets bought across all positions (negative for shorts).
+
+         Is represented as a dictionary from a market code to the total asset."""
+        assets = collections.defaultdict(int)
+
+        for p in self.positions:
+            assets[p.market_data.market_id] += p.amount
+
+        return assets
 
     def _owed_tax(self):
         """Calculates how much tax is owed this year. """
@@ -53,8 +64,6 @@ class SimAccount(Account):
             self._margin = sum(p.margin() for p in self.positions)
         return self._margin
 
-    # @functools.lru_cache()
-    # def _cached_profit(self, steps_ctr):
 
     def profit(self):
         """Total profit / loss (negative profit) from all open positions. """
@@ -67,7 +76,7 @@ class SimAccount(Account):
         """Free capital in the account. """
         return self.balance + self.profit() - self.margin()
 
-    def open(self, amt: int, market="vix", limit=None, stop=None) -> SimPosition:
+    def open(self, amt: int, market="vix", limit=None, stop=None) -> Position:
         """
         Open a new position at market price.
 
@@ -82,20 +91,21 @@ class SimAccount(Account):
         assert isinstance(amt, int)
         assert amt != 0
 
-        pos = SimPosition(amt, self.market_data, limit=limit, stop=stop)
+        price = self.market_data.ask if amt > 0 else self.market_data.bid
+
+        pos = Position(amt, self.market_data, price, limit=limit, stop=stop)
         if self.available >= pos.margin():
             self.positions.append(pos)
             logger.info(f"Opening position {pos}")
             logger.debug(
-                f"balance {self.balance:.2f} | "
-                f"profit {self.profit():.2f} | available {self.available:.2f} | "
-                f"risk {self.risk():.2f} | margin {self.margin():.2f}"
+                f"balance {self.balance:.2f} | profit {self.profit():.2f} | "
+                f"available {self.available:.2f} |  margin {self.margin():.2f}"
             )
             return pos
         else:
             raise InsufficientFundsException
 
-    def close(self, position: SimPosition):
+    def close(self, position: Position):
         """Close a position at the market price."""
 
         assert position in self.positions

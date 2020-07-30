@@ -4,7 +4,7 @@ add flag ` -m "not slow" ` to deselect slow tests.
 
 import pytest
 
-from env.sim.market_data import SimMarket
+from sim._sim_market_data import SimMarket
 
 
 class TestMarketData(SimMarket):
@@ -18,6 +18,6 @@ class TestMarketData(SimMarket):
 
 @pytest.fixture()
 def price_data():
-    p = TestMarketData(market_id="vix", lowest=10, highest=110)
+    p = TestMarketData(market_id="vix")
     p.set_prices(low=10, high=12, delta=1)
     yield p

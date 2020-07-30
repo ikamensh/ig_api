@@ -1,33 +1,32 @@
 from typing import ClassVar
 
 from datasets.fade_over import fadeover_4_years
-from env.sim.account import SimAccount
-from env.sim.market_data import SimMarket
+from datasets.market_history import MarketHistory
+from sim.sim_session import SimulatedServer, SimSession
 from robotrader.robotrader import RoboTrader
 from loguru import logger
 
 
-def simulate(rt_cls: ClassVar[RoboTrader], dataset=None, **kwargs):
+def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, **kwargs):
     START_BALANCE = 5000
+    dataset = dataset or fadeover_4_years()
 
-    price_dataset = dataset or fadeover_4_years()
-    market_data = SimMarket(market_id="vix")
-    account = SimAccount(balance=START_BALANCE, market_data=market_data,
-                         steps_per_day=price_dataset.steps_per_day)
-    rt = rt_cls(account, market_data, price_dataset.steps_per_day, **kwargs)
+    server = SimulatedServer(balance=START_BALANCE, history=dataset)
+    sess = SimSession(server)
 
-    for i, (low, high, delta) in enumerate(price_dataset):
-        market_data.set_prices(low=low, high=high, delta=delta)
-        account.step()
+    rt = rt_cls(sess, dataset.market, dataset.steps_per_day, **kwargs)
+
+    while server.cur_time < dataset.end:
         rt.step()
+        server.step()
         logger.info(
-            f"Step {i} - Price {market_data.bid:.2f} / {market_data.ask:.2f}, Account: "
-            f"{rt.account.balance + rt.account.profit():.2f} {len(rt.account.positions)}",
+            f"At {server.cur_time} - Price {server.market_data.bid:.2f} / {server.market_data.ask:.2f}, Account: "
+            f"{server.account.balance + server.account.profit():.2f} {len(server.account.positions)}",
         )
 
-    for p in list(rt.account.positions):
-        rt.account.close(p)
+    for p in list(server.account.positions):
+        server.account.close(p)
 
     # visualize(rt)
 
-    return (rt.account.balance - START_BALANCE) / START_BALANCE
+    return (server.account.balance - START_BALANCE) / START_BALANCE

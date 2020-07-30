@@ -1,4 +1,4 @@
-from env.sim.account import SimAccount
+from sim._sim_account import SimAccount
 
 
 def test_hit_limit_long(price_data):

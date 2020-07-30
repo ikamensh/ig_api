@@ -5,11 +5,13 @@ from src.robotrader.features.derived_features import expavg_stddev
 
 
 class ExpAvgTrader(RoboTrader):
-    def __init__(self, account, market_data, steps_per_day):
-        super().__init__(account, market_data, steps_per_day)
+    def __init__(self, account, market_id, steps_per_day):
+        super().__init__(account, market_id, steps_per_day)
 
         self.day_dev = expavg_stddev(window=steps_per_day, smoothing=self.beta_days(30))
-        self.week_dev = expavg_stddev(window=steps_per_day * 5, smoothing=self.beta_days(60))
+        self.week_dev = expavg_stddev(
+            window=steps_per_day * 5, smoothing=self.beta_days(60)
+        )
 
         self.price_avg_30 = ExpAvg(beta=self.beta_days(30), fn=price)
         self.price_avg_100 = ExpAvg(beta=self.beta_days(100), fn=price)
@@ -22,18 +24,16 @@ class ExpAvgTrader(RoboTrader):
         }
 
     def decide_actions(self):
-        free = (
-                       self.account.balance - self.account.risk() - self.account.margin()
-               ) / self.account.balance
+        free = (self.available - self._risk()) / self.balance
 
         if free < 0.3:
             return
 
         delta_30 = (
-                           price(self.market_data) - self.price_avg_30.value
+            price(self.market_data()) - self.price_avg_30.value
         ) / self.price_avg_30.value
         delta_100 = (
-                            price(self.market_data) - self.price_avg_100.value
+            price(self.market_data()) - self.price_avg_100.value
         ) / self.price_avg_100.value
 
         if delta_30 * delta_100 < 0:
@@ -45,33 +45,25 @@ class ExpAvgTrader(RoboTrader):
             delta = min(delta_30, delta_100)
 
         if delta < -0.15:  # low price - close short, open long
-            while (
-                self.account.positions and (p := self.account.positions[-1]).amount < 0
-            ):
-                self.account.close(p)
+            while self.positions and (p := self.positions[-1]).amount < 0:
+                self.close(p)
 
             max_amt = self.max_long_amount()
             if max_amt < 0:
                 return
             factor = abs(delta) ** 2
-            self.account.open(
-                max(3, int(factor * max_amt)),
-                market=self.market_data.market_id,
-                limit=self.market_data.ask * 1.2,
+            self.open(
+                max(3, int(factor * max_amt)), limit=self.market_data().ask * 1.2,
             )
 
         elif delta > 0.3:  # high price - close long, open short positions
-            while (
-                self.account.positions and (p := self.account.positions[-1]).amount > 0
-            ):
-                self.account.close(p)
+            while self.positions and (p := self.positions[-1]).amount > 0:
+                self.close(p)
 
             max_amt = self.max_short_amount()
             if max_amt < 0:
                 return
             factor = abs(delta) ** 2
-            self.account.open(
-                -max(3, int(factor * max_amt)),
-                market=self.market_data.market_id,
-                limit=self.market_data.bid * 0.8,
+            self.open(
+                -max(3, int(factor * max_amt)), limit=self.market_data().bid * 0.8,
             )

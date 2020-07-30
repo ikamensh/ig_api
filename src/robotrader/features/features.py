@@ -1,26 +1,22 @@
 import collections
 import typing
+import datetime
 
-from env.real.market_data import RealMarket
-
-if typing.TYPE_CHECKING:
-    from env.abc.market_data import MarketData
+from api.data_model.market_data import MarketData
 
 
 class Feature:
     value: float
-    last_step: int = 0
+    last_step: datetime = datetime.datetime(year=1970, month=1, day=1)
     fn: typing.Callable = None
 
     def update(self, market_data: "MarketData"):
         if isinstance(self.fn, Feature):
             self.fn.update(market_data)
 
-        if isinstance(market_data, RealMarket):
+        if self.last_step < market_data.time:
             self.update_once(market_data)
-        elif self.last_step < market_data.step: # assuming the market data to be SimMarket
-            self.update_once(market_data)
-            self.last_step = market_data.step
+            self.last_step = market_data.time
 
     def update_once(self, platform: "MarketData"):
         pass
@@ -29,14 +25,14 @@ class Feature:
         self.update(platform)
         return self.value
 
-def variance(market_data):
+def variance(market_data: MarketData):
     return ((market_data.high_bid + market_data.high_ask - market_data.low_ask - market_data.low_bid) / 4) ** 2
 
-def price(market_data):
+def price(market_data: MarketData):
     return (market_data.ask + market_data.bid) / 2
 
-def low_high(platform):
-    return (platform.high_ask + platform.high_bid) / 2, (platform.low_bid + platform.low_ask) / 2
+def low_high(market_data: MarketData):
+    return (market_data.high_ask + market_data.high_bid) / 2, (market_data.low_bid + market_data.low_ask) / 2
 
 
 class Pow(Feature):

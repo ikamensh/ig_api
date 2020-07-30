@@ -2,7 +2,7 @@ import os
 
 from loguru import logger
 
-from datasets.historical import get_ig_vix_ds
+from datasets.historical import ig_vix
 from robotrader.traders.evopot import EvoPotTrader
 from robotrader.traders.exp_avg import ExpAvgTrader
 from simulate import simulate

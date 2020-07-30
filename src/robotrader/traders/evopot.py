@@ -30,7 +30,7 @@ class EvoPotTrader(PotentialTrader):
 
     def potential(self) -> float:
         return hyperb_tan(
-            (self.price_avg.value - price(self.market_data) +
+            (self.price_avg.value - price(self.market_data()) +
              self.mom_pot_s * self.momentum_short.value +
              self.mom_pot * self.momentum.value) / (
                         self.dev_pot * self.dev.value + self.dev_s_pot * self.dev_short.value)

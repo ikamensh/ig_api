@@ -2,20 +2,20 @@ from datetime import datetime
 
 import requests
 import contextlib
-from typing import List
+from typing import List, Generator, Tuple
 
+from api.abstract_session import Session
 from api.data_model.acc_detail import AccountDetails
-from env.real.position import RealPosition
-from env.sim.position import Position
+from api.data_model.market_data import MarketData
+from api.data_model.position import Position
 from api.exceptions import LoginError
 from api.data_model.snapshot import Snapshot
-from env.real.market_data import RealMarket
 from loguru import logger
 
 _demo_url = "https://demo-api.ig.com/gateway/deal/"
 
 
-class IgSession:
+class IgSession(Session):
     def __init__(self, identifier, key, password, demo=True):
         self._master_url = _demo_url if demo else None
 
@@ -46,26 +46,26 @@ class IgSession:
 
             # can be expensive - we make API call for each new market we see.
             # Actual data is already in the response.
-            pos = RealPosition(
+            pos = Position(
                 amount, self.get_market_data(market_id), deal_id=deal_id, price=price
             )
             result.append(pos)
 
         return result
 
-    def get_market_data(self, market) -> RealMarket:
+    def get_market_data(self, market) -> MarketData:
         if not market in self._latest_prices:
             price_data = self._get_market_data(market)
             self._latest_prices[market] = price_data
 
         return self._latest_prices[market]
 
-    def open_position(self, amount: int, market: str) -> RealPosition:
+    def open_position(self, amount: int, market: str) -> Position:
         # TODO support limit & stop
         ref = self._open_position(market, amount)
         return self._deal_confirm(ref)
 
-    def close_position(self, pos: RealPosition) -> None:
+    def close_position(self, pos: Position) -> None:
         otc_url = self._master_url + "positions/otc"
 
         body = {
@@ -99,7 +99,7 @@ class IgSession:
         matches = []
         for acc in r.json()["accounts"]:
             if acc["accountName"] == target_name:
-                matches.append(AccountDetails(acc))
+                matches.append(AccountDetails.from_json(acc))
 
         if not matches:
             raise Exception(f"Account not found. {r.json()}")
@@ -111,7 +111,7 @@ class IgSession:
 
     def price_history(
         self, market: str, resolution: str, start: datetime, end: datetime,
-    ):
+    ) -> Generator[Tuple[str, float, float, float], None, None]:
         prices_url = self._master_url + "prices/"
 
         start = start.isoformat()
@@ -190,7 +190,7 @@ class IgSession:
         yield
         del self._headers["_method"]
 
-    def _get_market_data(self, market) -> RealMarket:
+    def _get_market_data(self, market) -> MarketData:
         markets_url = self._master_url + "markets/"
 
         with self._use_version(3):
@@ -202,12 +202,12 @@ class IgSession:
         instrument_el = reply["instrument"]
         dealing_rules = reply["dealingRules"]
 
-        market_id = instrument_el["epic"]
+        assert market == instrument_el["epic"]
         assert instrument_el["marginFactorUnit"] == "PERCENTAGE"
         margin_req = float(instrument_el["marginFactor"]) / 100
 
-        return RealMarket(
-            market_id=market_id, bid=snap.bid, ask=snap.offer, margin_req=margin_req
+        return MarketData(
+            market_id=market, bid=snap.bid, ask=snap.offer, low=snap.low, high=snap.high, margin_req=margin_req, time=datetime.now()
         )
 
     def _open_position(self, market, amount) -> str:
@@ -242,7 +242,7 @@ class IgSession:
 
         return r.json()["dealReference"]
 
-    def _deal_confirm(self, deal_reference) -> RealPosition:
+    def _deal_confirm(self, deal_reference) -> Position:
         trade_confirm_url = self._master_url + "confirms/"
 
         r = requests.get(
@@ -266,7 +266,7 @@ class IgSession:
 
         market = reply["epic"]
 
-        return RealPosition(
+        return Position(
             amount=amount,
             market_data=self.get_market_data(market),
             price=price,

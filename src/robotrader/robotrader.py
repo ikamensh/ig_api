@@ -13,6 +13,8 @@ if typing.TYPE_CHECKING:
 
 
 class BoundsEstimate:
+    """Stores estimated lowest and highest probable values per market code."""
+
     def __init__(self, sess: Session):
         self._sess = sess
         self._lows = {}
@@ -40,9 +42,18 @@ VIX_MIN_PRICE = 10
 VIX_HIGH_PRICE = 110
 
 class RoboTrader:
+    """Abstract class for trading bot."""
+
     def __init__(
         self, sess: Session, target_market: markets.MarketId, steps_per_day: int = None
     ):
+        """
+        Args:
+            sess: a Session object used to interact with the broker server.
+            target_market: currently, a bot is doing trades only on a single market.
+            steps_per_day:
+                how many time per actual day will step function be called. Used to calibrate features.
+        """
         self.sess = sess
         self.market = target_market
         self.steps_per_day = steps_per_day
@@ -54,6 +65,8 @@ class RoboTrader:
         self.bounds.set_high(markets.vix.code, VIX_HIGH_PRICE)
 
     def step(self):
+        """Activate robotrader: update features, decide and execute actions. """
+
         logger.debug(f"{self.__class__.__name__} is updating features.")
         for k, f in self.features.items():
             data = self.sess.get_market_data(self.market)
@@ -64,13 +77,17 @@ class RoboTrader:
         except CantOpenPosition:
             pass
 
-    def beta_days(self, days):
+    def _beta_days(self, days: float):
+        """Recommended coeficient for exponential average based on half-life in days. """
+
         return 1 - 0.6 / days / self.steps_per_day
 
     def decide_actions(self):
         raise NotImplementedError
 
     def warm_up(self, ds: MarketHistory):
+        """Use a market history object to bring features to current values. """
+
         logger.info(
             f"Running warmup on {ds} ({len(ds)=}, {ds.steps_per_day=}, {ds.start=}, {ds.end=})"
         )

@@ -61,15 +61,15 @@ class EvoPotTrader(PotentialTrader):
 
 
         self.dev_short = expavg_stddev(window=int(self.steps_per_day * window1),
-                                       smoothing=self.beta_days(b_dev_s))
+                                       smoothing=self._beta_days(b_dev_s))
         self.dev = expavg_stddev(window=int(self.steps_per_day * window2),
-                                 smoothing=self.beta_days(b_dev))
+                                 smoothing=self._beta_days(b_dev))
 
-        self.price_avg_short = ExpAvg(beta=self.beta_days(b_avg_s), fn=price)
-        self.price_avg = ExpAvg(beta=self.beta_days(b_avg), fn=price)
+        self.price_avg_short = ExpAvg(beta=self._beta_days(b_avg_s), fn=price)
+        self.price_avg = ExpAvg(beta=self._beta_days(b_avg), fn=price)
 
-        self.momentum_short = ExpAvg(beta=self.beta_days(b_mom_s), fn=Momentum(price, steps_per_day))
-        self.momentum = ExpAvg(beta=self.beta_days(b_mom), fn=Momentum(price, steps_per_day))
+        self.momentum_short = ExpAvg(beta=self._beta_days(b_mom_s), fn=Momentum(price, steps_per_day))
+        self.momentum = ExpAvg(beta=self._beta_days(b_mom), fn=Momentum(price, steps_per_day))
 
         self.features = {
             "dev_short": self.dev_short,

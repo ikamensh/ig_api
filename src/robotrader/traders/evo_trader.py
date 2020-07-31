@@ -45,11 +45,11 @@ class EvoTrader(RoboTrader):
         ) = (params or self.random_params())
 
         self.day_dev = expavg_stddev(
-            window=int(self.steps_per_day * window), smoothing=self.beta_days(beta3)
+            window=int(self.steps_per_day * window), smoothing=self._beta_days(beta3)
         )
 
-        self.price_avg_30 = ExpAvg(beta=self.beta_days(beta1), fn=price)
-        self.price_avg_100 = ExpAvg(beta=self.beta_days(beta2), fn=price)
+        self.price_avg_30 = ExpAvg(beta=self._beta_days(beta1), fn=price)
+        self.price_avg_100 = ExpAvg(beta=self._beta_days(beta2), fn=price)
 
         self.features = {
             "day_dev": self.day_dev,

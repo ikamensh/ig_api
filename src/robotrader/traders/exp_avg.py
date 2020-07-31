@@ -8,13 +8,13 @@ class ExpAvgTrader(RoboTrader):
     def __init__(self, sess, market_id, steps_per_day):
         super().__init__(sess, market_id, steps_per_day)
 
-        self.day_dev = expavg_stddev(window=steps_per_day, smoothing=self.beta_days(30))
+        self.day_dev = expavg_stddev(window=steps_per_day, smoothing=self._beta_days(30))
         self.week_dev = expavg_stddev(
-            window=steps_per_day * 5, smoothing=self.beta_days(60)
+            window=steps_per_day * 5, smoothing=self._beta_days(60)
         )
 
-        self.price_avg_30 = ExpAvg(beta=self.beta_days(30), fn=price)
-        self.price_avg_100 = ExpAvg(beta=self.beta_days(100), fn=price)
+        self.price_avg_30 = ExpAvg(beta=self._beta_days(30), fn=price)
+        self.price_avg_100 = ExpAvg(beta=self._beta_days(100), fn=price)
 
         self.features = {
             "day_dev": self.day_dev,

@@ -5,8 +5,8 @@ from src.robotrader.features.derived_features import expavg_stddev
 
 
 class ExpAvgTrader(RoboTrader):
-    def __init__(self, account, market_id, steps_per_day):
-        super().__init__(account, market_id, steps_per_day)
+    def __init__(self, sess, market_id, steps_per_day):
+        super().__init__(sess, market_id, steps_per_day)
 
         self.day_dev = expavg_stddev(window=steps_per_day, smoothing=self.beta_days(30))
         self.week_dev = expavg_stddev(

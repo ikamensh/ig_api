@@ -5,12 +5,12 @@ from loguru import logger
 from blackopt.util.document import generate_report
 
 from blackopt.abc import Problem, Solution
-from blackopt.algorithms import RandomSearch, Gaos
+from blackopt.algorithms import Gaos
 
-from datasets.fade_over import fadeover_4_years, fadeover_1_year
+from datasets.fade_over import fadeover_4_years
 from datasets.historical import get_ig_vix_ds, get_ig_vix_eu_ds
 from robotrader.traders.evopot import EvoPotTrader
-from simulate import simulate
+from launchers.simulate import simulate
 
 
 def void(*args, **kwargs):

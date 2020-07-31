@@ -7,7 +7,7 @@ from robotrader.traders.random import RandomTrader
 @pytest.mark.slow()
 @pytest.mark.skip()
 def test_trading_is_hard():
-    from simulate import simulate
+    from launchers.simulate import simulate
     logger.remove(0)
 
     changes = []

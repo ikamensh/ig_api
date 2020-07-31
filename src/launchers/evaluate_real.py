@@ -1,6 +1,6 @@
 from datasets.historical import get_ig_vix_ds
 from robotrader.traders.evopot import EvoPotTrader
-from simulate import simulate
+from launchers.simulate import simulate
 
 from loguru import logger
 def void(*args, **kwargs):

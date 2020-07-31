@@ -1,7 +1,7 @@
 import random
 
 from robotrader.traders.potential_trader import PotentialTrader
-from simulate import simulate
+from launchers.simulate import simulate
 
 
 class TestTrader(PotentialTrader):

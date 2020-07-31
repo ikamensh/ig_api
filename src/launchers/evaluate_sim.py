@@ -2,10 +2,8 @@ import os
 
 from loguru import logger
 
-from datasets.historical import ig_vix
 from robotrader.traders.evopot import EvoPotTrader
-from robotrader.traders.exp_avg import ExpAvgTrader
-from simulate import simulate
+from launchers.simulate import simulate
 from matplotlib import pyplot as plt
 import time
 

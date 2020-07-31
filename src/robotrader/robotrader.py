@@ -36,6 +36,8 @@ class BoundsEstimate:
         return self._highs[market_code]
 
 
+VIX_MIN_PRICE = 10
+VIX_HIGH_PRICE = 110
 
 class RoboTrader:
     def __init__(
@@ -46,6 +48,10 @@ class RoboTrader:
         self.steps_per_day = steps_per_day
         self.features: typing.Dict[str, Feature] = {}
         self.bounds = BoundsEstimate(sess)
+
+        # Built-in knowledge - VIX stayed for most of it's history between these two values.
+        self.bounds.set_low(markets.vix.code, VIX_MIN_PRICE)
+        self.bounds.set_high(markets.vix.code, VIX_HIGH_PRICE)
 
     def step(self):
         logger.debug(f"{self.__class__.__name__} is updating features.")
@@ -99,13 +105,13 @@ class RoboTrader:
     def max_long_amount(self):
 
         data = self.sess.get_market_data(self.market)
-        risk_per_unit = data.ask - self.bounds.low(self.market.code)
+        risk_per_unit = max(1, data.ask - self.bounds.low(self.market.code))
         return self._free_money() / risk_per_unit
 
     def max_short_amount(self):
 
         data = self.sess.get_market_data(self.market)
-        risk_per_unit = self.bounds.high(self.market.code) - data.bid
+        risk_per_unit = max(1, self.bounds.high(self.market.code) - data.bid)
         return self._free_money() / risk_per_unit
 
     def market_data(self, market_code = None):

@@ -4,7 +4,7 @@ add flag ` -m "not slow" ` to deselect slow tests.
 
 import pytest
 
-from sim._sim_market_data import SimMarket
+from api.sim._sim_market_data import SimMarket
 
 
 class TestMarketData(SimMarket):

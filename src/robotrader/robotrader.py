@@ -5,8 +5,8 @@ from loguru import logger
 from api.abstract_session import Session
 from api.data_model.position import Position
 from datasets.market_history import MarketHistory
-from exceptions import CantOpenPosition
-from sim._sim_market_data import SimMarket
+from api.exceptions import CantOpenPosition
+from api.sim._sim_market_data import SimMarket
 
 if typing.TYPE_CHECKING:
     from robotrader.features.features import Feature

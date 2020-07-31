@@ -1,6 +1,6 @@
 import pytest
 
-from sim._sim_account import SimAccount
+from api.sim._sim_account import SimAccount
 
 @pytest.mark.parametrize("amount", [-50, 50])
 def test_profit(amount, price_data):

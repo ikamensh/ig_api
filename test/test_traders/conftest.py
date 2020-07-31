@@ -1,6 +1,6 @@
 import pytest
 
-from sim.sim_session import SimSession, SimulatedServer
+from api.sim.sim_session import SimSession, SimulatedServer
 
 from datasets.historical import ig_vix
 

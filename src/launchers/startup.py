@@ -4,8 +4,8 @@ from loguru import logger
 
 import markets
 from datasets.market_history import MarketHistory
-from api.ig_session import IgSession
-from credentials import account_id, key, password
+from api.ig.ig_session import IgSession
+from resources.credentials import account_id, key, password
 from robotrader.traders.exp_avg import ExpAvgTrader
 
 VIX_MIN_PRICE = 10

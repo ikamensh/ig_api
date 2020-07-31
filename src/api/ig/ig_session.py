@@ -62,6 +62,8 @@ class IgSession(Session):
 
     def open_position(self, amount: int, market: str) -> Position:
         # TODO support limit & stop
+
+        # TODO handle insufficient funds
         ref = self._open_position(market, amount)
         return self._deal_confirm(ref)
 

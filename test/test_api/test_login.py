@@ -1,5 +1,5 @@
 from api.exceptions import LoginError
-from api.ig_session import IgSession
+from api.ig.ig_session import IgSession
 
 import pytest
 

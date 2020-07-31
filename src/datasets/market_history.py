@@ -1,13 +1,14 @@
-import os
 import csv
+import os
+from datetime import datetime, timedelta
 from collections import Counter
-from typing import Dict, Tuple, Iterator
+from typing import Dict, Iterator, Tuple
 
-from api.ig_session import IgSession
-from config import data_folder
-import markets
-import datetime
 from loguru import logger
+
+import markets
+from api.ig.ig_session import IgSession
+from config import data_folder
 
 
 class Resolutions:
@@ -17,10 +18,8 @@ class Resolutions:
     __all__ = [MINUTE_30, HOUR_2]
 
 
-def parse_date(timestamp: str) -> datetime.datetime:
-    return datetime.datetime.fromisoformat(timestamp)
+_synth_market_id = markets.MarketId(code=None, name="synthetic_data")
 
-synth_market_id = markets.MarketId(code=None, name="synthetic_data")
 
 class MarketHistory:
     """ Represents available historic data for a given market.
@@ -31,7 +30,7 @@ class MarketHistory:
         3) slicing data based on datetime
     """
 
-    def __init__(self, market: markets.MarketId = synth_market_id):
+    def __init__(self, market: markets.MarketId = _synth_market_id):
         self.csv_path = os.path.join(data_folder, f"{market.name}.csv")
         self.market = market
         self._data: Dict[datetime, Tuple[float, float, float]] = {}
@@ -46,16 +45,18 @@ class MarketHistory:
         srtd = sorted(self._data.items())
         self._start = srtd[0][0] if self._data else None
         self._end = srtd[-1][0] if self._data else None
-        self._data = {k:v for k, v in sorted(self._data.items())}
+        self._data = {k: v for k, v in sorted(self._data.items())}
 
         if srtd:
-            days = [datetime.datetime(year=k.year, month=k.month, day=k.day) for k in self._data]
+            days = [datetime(year=k.year, month=k.month, day=k.day) for k in self._data]
             ctr = Counter(days)
-            self.steps_per_day = ctr.most_common()[0][1]  # take the most common tuple, second element is the count
+            self.steps_per_day = ctr.most_common()[0][
+                1
+            ]  # take the most common tuple, second element is the count
 
         self._dirty_bit = False
 
-    def add_record(self, date_time: datetime.datetime, low: float, high: float, delta: float):
+    def add_record(self, date_time: datetime, low: float, high: float, delta: float):
         """ Add a single record. """
 
         self._dirty_bit = True
@@ -70,7 +71,9 @@ class MarketHistory:
         result = MarketHistory(market)
 
         if not os.path.exists(result.csv_path):
-            logger.warning(f"File {result.csv_path} doesn't exist - using empty MarketHistory.")
+            logger.warning(
+                f"File {result.csv_path} doesn't exist - using empty MarketHistory."
+            )
             return result
 
         with open(result.csv_path) as f:
@@ -79,7 +82,7 @@ class MarketHistory:
                 timestamp, data = t[0], t[1:]
                 low, high, delta = [float(x) for x in data]
 
-                d = parse_date(timestamp)
+                d = datetime.fromisoformat(timestamp)
                 result._data[d] = low, high, delta
 
         result.compute_start_end_step()
@@ -101,19 +104,23 @@ class MarketHistory:
     def update(self, sess: IgSession, resolution):
         """ Use session to update data to the latest available on the platform. """
 
-        assert resolution in Resolutions.__all__, f"Unsupported resolution {resolution}."
+        assert (
+            resolution in Resolutions.__all__
+        ), f"Unsupported resolution {resolution}."
 
-        if datetime.datetime.now() - self.end > datetime.timedelta(minutes=15):
+        if datetime.now() - self.end > timedelta(minutes=15):
             for t, (low, high, delta) in sess.price_history(
-                    self.market.code, resolution, start=self.end, end=datetime.datetime.now()
+                self.market.code, resolution, start=self.end, end=datetime.now()
             ):
-                self._data[datetime.datetime.fromisoformat(t)] = low, high, delta
+                self._data[datetime.fromisoformat(t)] = low, high, delta
             self.compute_start_end_step()
 
-    def slice(self, start: datetime.datetime = None, end: datetime.datetime = None) -> "MarketHistory":
+    def slice(self, start: datetime = None, end: datetime = None) -> "MarketHistory":
         """ Discard all records outside of the slice window defined by start and end. """
 
-        assert start or end, "To construct a slice, provide one or both of [start, end]."
+        assert (
+            start or end
+        ), "To construct a slice, provide one or both of [start, end]."
         if start and end:
             assert start < end
         new = MarketHistory(self.market)
@@ -129,13 +136,13 @@ class MarketHistory:
         return new
 
     @property
-    def start(self) -> datetime.datetime:
+    def start(self) -> datetime:
         if self._dirty_bit:
             self.compute_start_end_step()
         return self._start
 
     @property
-    def end(self) -> datetime.datetime:
+    def end(self) -> datetime:
         if self._dirty_bit:
             self.compute_start_end_step()
         return self._end
@@ -157,8 +164,6 @@ class MarketHistory:
     def __getitem__(self, item):
         return self._data[item]
 
-
-
     def plot(self):
         from matplotlib import pyplot as plt
 
@@ -167,23 +172,3 @@ class MarketHistory:
         plt.grid()
         plt.title("Prices")
         plt.show()
-
-
-
-if __name__ == "__main__":
-
-    adapted = MarketHistory.from_csv(markets.cboe_vix)
-    # adapted.add_averaging()
-
-    original = MarketHistory.from_csv(markets.cboe_vix)
-
-    from matplotlib import pyplot as plt
-
-    prices_smooth = [(low + high) / 2 for low, high, delta in adapted]
-    prices_original = [(low + high) / 2 for low, high, delta in original]
-    plt.plot(prices_smooth, label="adapted")
-    plt.plot(prices_original, label="original")
-    plt.grid()
-    plt.title("Prices")
-    plt.legend()
-    plt.show()

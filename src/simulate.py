@@ -2,7 +2,7 @@ from typing import ClassVar
 
 from datasets.fade_over import fadeover_4_years
 from datasets.market_history import MarketHistory
-from sim.sim_session import SimulatedServer, SimSession
+from api.sim.sim_session import SimulatedServer, SimSession
 from robotrader.robotrader import RoboTrader
 from loguru import logger
 

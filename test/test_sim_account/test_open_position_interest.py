@@ -1,4 +1,4 @@
-from sim._sim_account import SimAccount
+from api.sim._sim_account import SimAccount
 
 
 def test_holding_long_costs(price_data):

@@ -1,8 +1,8 @@
 import collections
 import typing
 
-from exceptions import InsufficientFundsException
-from sim._sim_market_data import SimMarket
+from api.exceptions import InsufficientFundsException
+from api.sim._sim_market_data import SimMarket
 
 from loguru import logger
 
@@ -123,13 +123,16 @@ class SimAccount:
         self._ensure_margin()
         self.stop_limit()
 
+        self._track_date()
+        self._collect_interest()
+
+    def _track_date(self):
+        """ Track days / years (for tax and interest purposes)."""
         self.steps_counter += 1
         if not self.steps_counter % self.steps_per_day:
             self.steps_counter = 0
             self.day += 1
-            days_to_pay = 1
             if not self.day % 7 == 5:
-                days_to_pay += 2
                 self.day += 2
 
             if self.day >= 365:
@@ -137,6 +140,12 @@ class SimAccount:
                 self.year_start_balance = self.balance
                 self.day = 0
 
+    def _collect_interest(self):
+        """ Depends on correct date being already set. """
+        if not self.steps_counter % self.steps_per_day:
+            days_to_pay = 1
+            if not self.day % 7 == 0:
+                days_to_pay += 2
             for p in self.positions:
                 self.balance -= days_to_pay * p.daily_cost()
 

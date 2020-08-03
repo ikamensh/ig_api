@@ -40,6 +40,7 @@ class SimulatedServer:
     def step(self):
         self.cur_time = next(self.steps_iter)
         self._set_prices()
+        self.account.step()
 
 
 class SimSession(Session):
@@ -59,7 +60,7 @@ class SimSession(Session):
     def update_market_data(self) -> None:
         if self._market_data.time <  self._server.market_data.time:
             src = self._server.market_data
-            self._market_data.set_prices(src.low, src.high, src.delta)
+            self._market_data.set_prices(src.low, src.high, src.delta, time=src.time)
 
     def open_position(
         self, amount: int, market: str, limit=None, stop=None

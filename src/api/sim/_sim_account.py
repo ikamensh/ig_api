@@ -96,6 +96,8 @@ class SimAccount:
         pos = Position(amt, self.market_data, price, limit=limit, stop=stop)
         if self.available >= pos.margin():
             self.positions.append(pos)
+            self._profit = None
+            self._margin = None
             logger.info(f"Opening position {pos}")
             logger.debug(
                 f"balance {self.balance:.2f} | profit {self.profit():.2f} | "
@@ -113,6 +115,8 @@ class SimAccount:
         logger.info(f"Closing position {position} for {profit=:.2f}")
         self.balance += profit
         self.positions.remove(position)
+        self._profit = None
+        self._margin = None
         self._settle_tax()
 
     def step(self):

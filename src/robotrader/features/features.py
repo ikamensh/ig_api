@@ -12,19 +12,25 @@ class Feature:
     """
 
     value: float
-    last_step: datetime = datetime.datetime(year=1970, month=1, day=1)
-    fn: typing.Callable = None
+    _last_step: datetime = datetime.datetime(year=1, month=1, day=1)
+    _fn: typing.Callable = None
 
     def update(self, market_data: "MarketData"):
-        if isinstance(self.fn, Feature):
-            self.fn.update(market_data)
+        if isinstance(self._fn, Feature):
+            self._fn.update(market_data)
 
-        if self.last_step < market_data.time:
-            self.update_once(market_data)
-            self.last_step = market_data.time
+        if self._last_step < market_data.time:
+            self._update_once(market_data)
+            self._last_step = market_data.time
 
-    def update_once(self, platform: "MarketData"):
+    def _update_once(self, platform: "MarketData"):
         pass
+
+    def reset_time(self):
+        if isinstance(self._fn, Feature):
+            self._fn.reset_time()
+        if hasattr(self, "_last_step"):
+            delattr(self, "_last_step")
 
     def __call__(self, platform: "MarketData"):
         self.update(platform)
@@ -38,11 +44,11 @@ def price(market_data: MarketData):
 class Pow(Feature):
     def __init__(self, fn, pow):
         self.pow = pow
-        self.fn: Feature = fn
+        self._fn: Feature = fn
 
     @property
     def value(self):
-        return self.fn.value ** self.pow
+        return self._fn.value ** self.pow
 
 
 class ExpAvg(Feature):
@@ -64,15 +70,15 @@ class ExpAvg(Feature):
         self.true_beta = beta
         self.beta = 0.01
         self.value = None
-        self.fn = fn
+        self._fn = fn
 
-    def update_once(self, platform: "MarketData"):
+    def _update_once(self, platform: "MarketData"):
         if self.value is None:
-            self.value = self.fn(platform)
+            self.value = self._fn(platform)
 
         beta_beta = 0.5 * self.true_beta + 0.5 * self.beta
         self.beta = beta_beta * self.beta + self.true_beta * (1 - beta_beta)
-        self.value = self.beta * self.value + self.fn(platform) * (1 - self.beta)
+        self.value = self.beta * self.value + self._fn(platform) * (1 - self.beta)
 
 
 def low_high(market_data: MarketData):
@@ -83,7 +89,7 @@ class WindowVariance(Feature):
     def __init__(self, n: int):
         self.memory = collections.deque(maxlen=1 + int(abs(n)) * 2)
 
-    def update_once(self, market_data: "MarketData"):
+    def _update_once(self, market_data: "MarketData"):
         self.memory.extend(low_high(market_data))
 
     @property
@@ -93,24 +99,24 @@ class WindowVariance(Feature):
 
 class Momentum(Feature):
     def __init__(self, fn, steps_per_day):
-        self.fn = fn
+        self._fn = fn
         self.last_val = None
         self.value = 0
         self.steps_per_day = steps_per_day
 
-    def update_once(self, market_data: "MarketData"):
+    def _update_once(self, market_data: "MarketData"):
         if self.last_val:
-            self.value = self.steps_per_day * (self.fn(market_data) - self.last_val)
-        self.last_val = self.fn(market_data)
+            self.value = self.steps_per_day * (self._fn(market_data) - self.last_val)
+        self.last_val = self._fn(market_data)
 
 
 class MovingAvg(Feature):
     def __init__(self, n, fn: typing.Callable[["MarketData"], float]):
         self.memory = collections.deque(maxlen=n)
-        self.fn = fn
+        self._fn = fn
 
-    def update_once(self, market_data: "MarketData"):
-        self.memory.append(self.fn(market_data))
+    def _update_once(self, market_data: "MarketData"):
+        self.memory.append(self._fn(market_data))
 
     @property
     def value(self):

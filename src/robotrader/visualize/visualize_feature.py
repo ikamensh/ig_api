@@ -4,17 +4,17 @@ from typing import Dict
 from bokeh.colors.util import NamedColor
 from bokeh.plotting import figure, show
 
-from datasets.price_dataset import PriceDataset
 from api.sim._sim_market_data import SimMarket
+from datasets.market_history import MarketHistory
 from robotrader.features.features import Feature, price
 
 
-def vis_features(features: Dict[str, Feature], ds: PriceDataset):
+def vis_features(features: Dict[str, Feature], ds: MarketHistory):
 
     values = collections.defaultdict(list)
     market_data = SimMarket("fake_market_id")
 
-    for _, low, high, delta in ds:
+    for low, high, delta in ds:
         market_data.set_prices(low, high, delta)
         for k, f in features.items():
             f.update(market_data)
@@ -37,9 +37,8 @@ if __name__ == "__main__":
               -0.8847595303563158, 0.09072866090354159]
 
     from robotrader.traders.evopot import EvoPotTrader
-    from datasets.historical import get_ig_vix_ds
+    from datasets.historical import ig_vix
 
-    ds = get_ig_vix_ds()
-    tdr = EvoPotTrader(None, None, ds.steps_per_day, params=params)
-    vis_features(tdr.features, ds)
+    tdr = EvoPotTrader(None, None, ig_vix.steps_per_day, params=params)
+    vis_features(tdr.features, ig_vix)
 

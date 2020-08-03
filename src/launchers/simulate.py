@@ -11,10 +11,16 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, **kwargs
     START_BALANCE = 5000
     dataset = dataset or fadeover_4_years()
 
-    server = SimulatedServer(balance=START_BALANCE, history=dataset)
+    keys = list(dataset.keys())
+    start_date = keys[len(keys) // 3]
+    history = dataset.slice(end=start_date)
+    future = dataset.slice(start=start_date)
+
+    server = SimulatedServer(balance=START_BALANCE, history=future)
     sess = SimSession(server)
 
     rt = rt_cls(sess, dataset.market, dataset.steps_per_day, **kwargs)
+    rt.warm_up(history)
 
     while server.cur_time < dataset.end:
         rt.step()

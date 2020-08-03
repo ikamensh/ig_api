@@ -27,6 +27,8 @@ class SimulatedServer:
         self, market: str, resolution: str, start: datetime, end: datetime
     ):
         assert market == self.history.market.code
+
+        end = min(self.cur_time, end)
         # assert resolution == self.history.steps_per_day TODO
         for k, v in self.history.slice(start, end).items():
             yield (k.isoformat(), *v)

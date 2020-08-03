@@ -30,13 +30,9 @@ class Feature:
         self.update(platform)
         return self.value
 
-def variance(market_data: MarketData):
-    return ((market_data.high - market_data.low) / 4) ** 2
 
 def price(market_data: MarketData):
     return (market_data.ask + market_data.bid) / 2
-
-
 
 
 class Pow(Feature):
@@ -51,40 +47,48 @@ class Pow(Feature):
 
 class ExpAvg(Feature):
     def __init__(self, beta, fn: typing.Callable[["MarketData"], float]):
+        """
+        Args:
+            beta: what fraction of old value is kept at each update. High beta = slow moving avg
+            fn: the function or Feature to apply averaging to.
+        """
+
+        # Hack for genetic algorithms.
         if beta < 0:
             beta = abs(beta)
 
         if not 0.5 < beta < 1:
             beta = 0.75
 
-        self.beta = beta
+        # start up - initially beta will be low, and will approach true value with time.
+        self.true_beta = beta
+        self.beta = 0.01
         self.value = None
         self.fn = fn
-        self.count = 0
-        self.warm_up_buf = []
 
     def update_once(self, platform: "MarketData"):
-        if self.count < 10:
-            self.warm_up_buf.append(self.fn(platform))
-            self.value = sum(self.warm_up_buf) / len(self.warm_up_buf)
-            self.count += 1
-        else:
-            self.value = self.beta * self.value + self.fn(platform) * (1 - self.beta)
+        if self.value is None:
+            self.value = self.fn(platform)
+
+        beta_beta = 0.5 * self.true_beta + 0.5 * self.beta
+        self.beta = beta_beta * self.beta + self.true_beta * (1 - beta_beta)
+        self.value = self.beta * self.value + self.fn(platform) * (1 - self.beta)
 
 
 def low_high(market_data: MarketData):
     return market_data.low, market_data.high
 
+
 class WindowVariance(Feature):
     def __init__(self, n: int):
-        self.memory = collections.deque(maxlen=1 + int(abs(n))*2)
+        self.memory = collections.deque(maxlen=1 + int(abs(n)) * 2)
 
     def update_once(self, market_data: "MarketData"):
         self.memory.extend(low_high(market_data))
 
     @property
     def value(self):
-        return ( max(self.memory) - min(self.memory) ) ** 2
+        return (max(self.memory) - min(self.memory)) ** 2
 
 
 class Momentum(Feature):

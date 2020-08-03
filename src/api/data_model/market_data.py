@@ -1,4 +1,6 @@
-import markets
+from datetime import datetime
+
+from api.data_model.snapshot import Snapshot
 
 
 class MarketData:
@@ -6,7 +8,7 @@ class MarketData:
 
     def __init__(
         self,
-        market_id: markets.MarketId,
+        market_code: str,
         bid: float,
         ask: float,
         high: float,
@@ -16,7 +18,7 @@ class MarketData:
     ):
         assert 0 < margin_req <= 1
 
-        self.market_id = market_id
+        self.market_code = market_code
         self.margin_req = margin_req
         self.bid = bid
         self.ask = ask
@@ -26,6 +28,29 @@ class MarketData:
         self.low = low
 
         self.time = time
+
+    @staticmethod
+    def from_snapshot(
+        snap: Snapshot, market_code: str, margin_req: float
+    ) -> "MarketData":
+        result = MarketData(
+            market_code=market_code,
+            bid=snap.bid,
+            ask=snap.offer,
+            low=snap.low,
+            high=snap.high,
+            margin_req=margin_req,
+            time=datetime.now(),
+        )
+
+        return result
+
+    def update(self, snap: Snapshot):
+        self.bid = snap.bid
+        self.ask = snap.offer
+        self.low = snap.low
+        self.high = snap.high
+        self.time = datetime.now()
 
     @property
     def low_bid(self):
@@ -45,6 +70,6 @@ class MarketData:
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__} '{self.market_id}' with prices "
+            f"{self.__class__.__name__} '{self.market_code}' with prices "
             f"{self.bid} / {self.ask} and margin of {self.margin_req}"
         )

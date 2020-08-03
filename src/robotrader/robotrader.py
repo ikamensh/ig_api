@@ -66,10 +66,10 @@ class RoboTrader:
 
     def step(self):
         """Activate robotrader: update features, decide and execute actions. """
-
+        self.sess.update_market_data()
         logger.debug(f"{self.__class__.__name__} is updating features.")
         for k, f in self.features.items():
-            data = self.sess.get_market_data(self.market)
+            data = self.sess.get_market_data(self.market.code)
             f.update(data)
             logger.debug(f"{k: <15} = {f.value:.3f}")
         try:
@@ -109,9 +109,9 @@ class RoboTrader:
     def _pos_risk(self, position):
         """Amount of worst-case loss due to this position. """
         if position.amount > 0:
-            return position.amount * (position.price - self.bounds.low(position.market_data.market_id.code))
+            return position.amount * (position.price - self.bounds.low(position.market_data.market_code))
         else:
-            return abs(position.amount) * (self.bounds.high(position.market_data.market_id.code) - position.price)
+            return abs(position.amount) * (self.bounds.high(position.market_data.market_code) - position.price)
 
     def _risk(self):
         return sum([self._pos_risk(p) for p in self.sess.get_positions()])
@@ -121,13 +121,13 @@ class RoboTrader:
 
     def max_long_amount(self):
 
-        data = self.sess.get_market_data(self.market)
+        data = self.sess.get_market_data(self.market.code)
         risk_per_unit = max(1, data.ask - self.bounds.low(self.market.code))
         return self._free_money() / risk_per_unit
 
     def max_short_amount(self):
 
-        data = self.sess.get_market_data(self.market)
+        data = self.sess.get_market_data(self.market.code)
         risk_per_unit = max(1, self.bounds.high(self.market.code) - data.bid)
         return self._free_money() / risk_per_unit
 

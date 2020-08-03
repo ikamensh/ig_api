@@ -50,6 +50,8 @@ def random_slice(years: float, source: MarketHistory = cboe_vix, resolution: int
     Adds random compression/dilation on time axis.
 
     Args:
+        years: approx. length of the slice.
+        source: dataset to take a slice from.
         resolution: how many steps per day of data to use.
 
     """

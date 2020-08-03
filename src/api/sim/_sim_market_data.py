@@ -7,9 +7,9 @@ from api.data_model.market_data import MarketData
 class SimMarket(MarketData):
     """This class stores and centrally updates price data for a single market."""
 
-    def __init__(self, market_id):
+    def __init__(self, market_code):
         super().__init__(
-            market_id,
+            market_code,
             bid=0,
             ask=0,
             low=0,

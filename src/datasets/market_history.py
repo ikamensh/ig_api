@@ -165,10 +165,14 @@ class MarketHistory:
         return self._data[item]
 
     def plot(self):
-        from matplotlib import pyplot as plt
 
         prices = [(low + high) / 2 for low, high, delta in self]
-        plt.plot(prices)
-        plt.grid()
-        plt.title("Prices")
-        plt.show()
+
+        from bokeh.plotting import figure, show
+
+        p = figure(
+            title=f"{self.market.name} - {self.market.code}", x_axis_label="x", y_axis_label="y", width=1200
+        )
+
+        p.line(list(range(len(prices))), prices, legend_label="price", line_width=1, color="blue")
+        show(p)

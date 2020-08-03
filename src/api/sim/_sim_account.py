@@ -38,7 +38,7 @@ class SimAccount:
         assets = collections.defaultdict(int)
 
         for p in self.positions:
-            assets[p.market_data.market_id] += p.amount
+            assets[p.market_data.market_code] += p.amount
 
         return assets
 

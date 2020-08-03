@@ -33,7 +33,7 @@ def mock_sess():
         currency="RMB!",
     )
 
-    sess.get_market_data.return_value = MarketData(markets.vix, 10, 20, 5, 25, 0.2, "5 O'Clock")
+    sess.get_market_data.return_value = MarketData(markets.vix.code, 10, 20, 5, 25, 0.2, "5 O'Clock")
 
     yield sess
 
@@ -82,7 +82,7 @@ def test_launch(mock_sess, monkeypatch, loguru_no_sinks):
 def test_buys_low(mock_sess, loguru_no_sinks):
 
     startup._session_factory = lambda: mock_sess
-    mock_sess.get_market_data.return_value = MarketData(markets.vix, 3, 3.08, 3, 5, 0.2, "5 O'Clock")
+    mock_sess.get_market_data.return_value = MarketData(markets.vix.code, 3, 3.08, 3, 5, 0.2, "5 O'Clock")
     startup.step()
 
     assert mock_sess.open_position.call_count == 1
@@ -94,7 +94,7 @@ def test_buys_low(mock_sess, loguru_no_sinks):
 
 def test_sells_high(mock_sess, loguru_no_sinks):
     startup._session_factory = lambda: mock_sess
-    mock_sess.get_market_data.return_value = MarketData(markets.vix, 70, 73.08, 70, 75, 0.2,
+    mock_sess.get_market_data.return_value = MarketData(markets.vix.code, 70, 73.08, 70, 75, 0.2,
                                                         "5 O'Clock")
     startup.step()
 

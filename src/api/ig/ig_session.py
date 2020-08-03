@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 import contextlib
-from typing import List, Generator, Tuple
+from typing import List, Generator, Tuple, Dict
 
 from api.abstract_session import Session
 from api.data_model.acc_detail import AccountDetails
@@ -16,12 +16,14 @@ _demo_url = "https://demo-api.ig.com/gateway/deal/"
 
 
 class IgSession(Session):
+    UPDATE_FREQ = timedelta(minutes=3)
+
     def __init__(self, identifier, key, password, demo=True):
         self._master_url = _demo_url if demo else None
 
         self._headers = {"X-IG-API-KEY": key}
         self._login(identifier, password)
-        self._latest_prices = {}
+        self._latest_prices: Dict[str, MarketData] = {}
 
     def get_positions(self) -> List[Position]:
         positions_url = self._master_url + "positions/"
@@ -53,12 +55,21 @@ class IgSession(Session):
 
         return result
 
-    def get_market_data(self, market) -> MarketData:
-        if not market in self._latest_prices:
-            price_data = self._get_market_data(market)
-            self._latest_prices[market] = price_data
+    def get_market_data(self, market_code: str) -> MarketData:
+        if not market_code in self._latest_prices:
+            snap, margin_req = self._get_market_data(market_code)
+            price_data = MarketData.from_snapshot(snap, market_code, margin_req)
+            self._latest_prices[market_code] = price_data
 
-        return self._latest_prices[market]
+        return self._latest_prices[market_code]
+
+    def update_market_data(self):
+        now = datetime.now()
+        for md in self._latest_prices.values():
+            if now - md.time > self.UPDATE_FREQ:
+                snap, margin_req = self._get_market_data(md.market_code)
+                md.update(snap)
+                logger.debug(f"Updating market data: {md}.")
 
     def open_position(self, amount: int, market: str) -> Position:
         # TODO support limit & stop
@@ -192,11 +203,11 @@ class IgSession(Session):
         yield
         del self._headers["_method"]
 
-    def _get_market_data(self, market) -> MarketData:
+    def _get_market_data(self, market_code: str) -> Tuple[Snapshot, float]:
         markets_url = self._master_url + "markets/"
 
         with self._use_version(3):
-            r = requests.get(url=markets_url + market, headers=self._headers)
+            r = requests.get(url=markets_url + market_code, headers=self._headers)
 
         assert r.status_code == 200
         reply = r.json()
@@ -204,13 +215,11 @@ class IgSession(Session):
         instrument_el = reply["instrument"]
         dealing_rules = reply["dealingRules"]
 
-        assert market == instrument_el["epic"]
+        assert market_code == instrument_el["epic"]
         assert instrument_el["marginFactorUnit"] == "PERCENTAGE"
         margin_req = float(instrument_el["marginFactor"]) / 100
 
-        return MarketData(
-            market_id=market, bid=snap.bid, ask=snap.offer, low=snap.low, high=snap.high, margin_req=margin_req, time=datetime.now()
-        )
+        return snap, margin_req
 
     def _open_position(self, market, amount) -> str:
         otc_url = self._master_url + "positions/otc/"

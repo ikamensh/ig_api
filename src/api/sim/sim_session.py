@@ -16,7 +16,7 @@ class SimulatedServer:
     def __init__(self, balance: int, history: MarketHistory):
         self.history = history
         self.steps_iter = iter(history.keys())
-        self.market_data = SimMarket(history.market)
+        self.market_data = SimMarket(history.market.code)
         self.cur_time = next(self.steps_iter)
         self._set_prices()
         self.account = SimAccount(
@@ -45,17 +45,24 @@ class SimSession(Session):
 
     def __init__(self, server: SimulatedServer):
         self._server = server
+        self._market_data = SimMarket(server.market_data.market_code)
 
     def get_positions(self) -> List[Position]:
         return self._server.account.positions
 
-    def get_market_data(self, market) -> MarketData:
-        return self._server.market_data
+    def get_market_data(self, market_code) -> MarketData:
+        assert market_code == self._server.market_data.market_code
+        return self._market_data
+
+    def update_market_data(self) -> None:
+        if self._market_data.time <  self._server.market_data.time:
+            src = self._server.market_data
+            self._market_data.set_prices(src.low, src.high, src.delta)
 
     def open_position(
         self, amount: int, market: str, limit=None, stop=None
     ) -> Position:
-        assert market == self._server.market_data.market_id.code
+        assert market == self._server.market_data.market_code
         return self._server.account.open(amount, market, limit, stop)
 
     def close_position(self, pos: Position) -> None:

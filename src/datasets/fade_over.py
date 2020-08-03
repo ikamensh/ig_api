@@ -1,5 +1,6 @@
 import typing
 from datetime import datetime, timedelta
+import random
 
 from datasets.market_history import MarketHistory
 from datasets.random_slice import random_slice
@@ -53,7 +54,8 @@ def fade_over(seq: typing.List[MarketHistory], overlap = 0.15) -> MarketHistory:
 
 
 def fadeover_4_years():
-    slices = [random_slice(years=1.5) for i in range(3)]
+    n_slices = random.randint(2, 4)
+    slices = [random_slice(years=0.5 + 2 * random.random()) for i in range(n_slices)]
     return fade_over(slices)
 
 
@@ -64,16 +66,8 @@ def fadeover_1_year():
 
 if __name__ == "__main__":
 
-    slices = [random_slice(years=1.5) for i in range(3)]
-    ds = fade_over(slices)
-
-    from matplotlib import pyplot as plt
-    prices = [sum(d[:2])/2 for d in ds]
-
-    plt.plot(prices)
-    plt.grid()
-    plt.title("Prices")
-    plt.show()
+    ds = fadeover_4_years()
+    ds.plot()
 
     print(ds.steps_per_day)
     print( len(ds) / (52.3 * (ds.steps_per_day * 5)) )

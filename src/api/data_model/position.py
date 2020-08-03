@@ -4,8 +4,6 @@ from api.exceptions import InvalidBoundingPriceException
 INTEREST_LONG = 1 / 1500
 INTEREST_SHORT = 1 / 4000
 
-
-
 class Position:
     """A position in the market.
 
@@ -47,7 +45,7 @@ class Position:
         self.stop = stop
 
     def __repr__(self):
-        result = f"Position {self.deal_id} in {self.market_data.market_id} | {self.amount:.2f} @ {self.price:.2f}"
+        result = f"Position {self.deal_id} in {self.market_data.market_code} | {self.amount:.2f} @ {self.price:.2f}"
         if self.limit:
             result += f" limit: {self.limit}"
         if self.stop:
@@ -81,6 +79,9 @@ class Position:
 
 
     def daily_cost(self):
+        """TODO does this belong in the Position class?
+        It's an approximation, maybe Robotrader or SimServer?"""
+
         ask, bid = self.market_data.ask, self.market_data.bid
         value = abs(self.amount) * (ask + bid) / 2
         if self.amount > 0:

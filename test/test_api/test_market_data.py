@@ -1,7 +1,7 @@
 import markets
-from api.data_model.market_data import MarketData
+from api.data_model.snapshot import Snapshot
 
 
 def test_gets_data(sess):
-    real_market = sess._get_market_data(markets._VIX)
-    assert isinstance(real_market, MarketData)
+    snap, margin_req = sess._get_market_data(markets._VIX)
+    assert isinstance(snap, Snapshot)

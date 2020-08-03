@@ -18,6 +18,6 @@ class TestMarketData(SimMarket):
 
 @pytest.fixture()
 def price_data():
-    p = TestMarketData(market_id="vix")
+    p = TestMarketData(market_code="vix")
     p.set_prices(low=10, high=12, delta=1)
     yield p

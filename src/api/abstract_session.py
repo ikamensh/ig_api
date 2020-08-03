@@ -12,7 +12,10 @@ class Session(ABC):
     def get_positions(self) -> List[Position]:
         raise NotImplementedError
 
-    def get_market_data(self, market) -> MarketData:
+    def get_market_data(self, market_code) -> MarketData:
+        raise NotImplementedError
+
+    def update_market_data(self) -> None:
         raise NotImplementedError
 
     def open_position(self, amount: int, market: str, limit=None, stop=None) -> Position:

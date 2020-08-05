@@ -1,4 +1,4 @@
 from src.robotrader.features.features import ExpAvg, WindowVariance, Pow
 
-def expavg_stddev(window, smoothing):
-    return Pow(ExpAvg(beta=smoothing, fn=WindowVariance(window)), 0.5)
+def expavg_stddev(window):
+    return Pow(fn=WindowVariance(window), pow=0.5)

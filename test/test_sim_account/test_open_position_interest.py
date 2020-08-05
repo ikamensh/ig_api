@@ -1,7 +1,7 @@
 from api.sim._sim_account import SimAccount
 
 
-def test_holding_long_costs(price_data):
+def test_holding_long_interest(price_data):
     STEPS_PER_DAY = 4
     balance_init = 500
     a = SimAccount(price_data, balance=balance_init, steps_per_day=STEPS_PER_DAY)
@@ -10,10 +10,10 @@ def test_holding_long_costs(price_data):
     for i in range(STEPS_PER_DAY*10):
         a.step()
 
-    assert a.balance < balance_init
+    assert a.balance != balance_init
 
 
-def test_holding_short_costs(price_data):
+def test_holding_short_interest(price_data):
     STEPS_PER_DAY = 4
     balance_init = 500
     a = SimAccount(price_data, balance=balance_init, steps_per_day=STEPS_PER_DAY)
@@ -22,4 +22,4 @@ def test_holding_short_costs(price_data):
     for i in range(STEPS_PER_DAY * 10):
         a.step()
 
-    assert a.balance < balance_init
+    assert a.balance != balance_init

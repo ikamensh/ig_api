@@ -60,10 +60,8 @@ class EvoPotTrader(PotentialTrader):
         ) = params or self.random_params()
 
 
-        self.dev_short = expavg_stddev(window=int(self.steps_per_day * window1),
-                                       smoothing=self._beta_days(b_dev_s))
-        self.dev = expavg_stddev(window=int(self.steps_per_day * window2),
-                                 smoothing=self._beta_days(b_dev))
+        self.dev_short = expavg_stddev(window=int(self.steps_per_day * window1))
+        self.dev = expavg_stddev(window=int(self.steps_per_day * window2))
 
         self.price_avg_short = ExpAvg(beta=self._beta_days(b_avg_s), fn=price)
         self.price_avg = ExpAvg(beta=self._beta_days(b_avg), fn=price)

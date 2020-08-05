@@ -1,52 +1,59 @@
 import collections
 from typing import ClassVar
 
-from datasets.fade_over import fadeover_4_years
-from datasets.market_history import MarketHistory
-from api.sim.sim_session import SimulatedServer, SimSession
-from robotrader.features.features import price
-from robotrader.robotrader import RoboTrader
+from bokeh.colors.util import NamedColor
+from bokeh.layouts import column
+from bokeh.plotting import figure, show
 from loguru import logger
 
+from api.sim.sim_session import SimSession, SimulatedServer
+from datasets.fade_over import fadeover_4_years
+from datasets.market_history import MarketHistory
+from datasets.random_slice import random_slice
+from robotrader.features.features import price
+from robotrader.robotrader import RoboTrader
 from robotrader.traders.exp_avg import ExpAvgTrader
 
 
 def _visualize(features):
-    from bokeh.plotting import figure, show
-    from bokeh.colors.util import NamedColor
-    from bokeh.layouts import column
-
-
+    """Display grouped plots of price and features vs time. """
 
     x = list(range(len(next(iter(features.values())))))
 
-    price_fig = figure(title="prices", x_axis_label='x', y_axis_label='y', width=2500, plot_height=300)
-    vs = [(k, v) for k, v in features.items() if "price" in k]
-    for i, (k, v) in enumerate(vs):
-        price_fig.line(x, v, legend_label=k, line_width=1, color=NamedColor.__all__[i + 29])
+    def plot_group(name: str):
+        price_fig = figure(title=name, x_axis_label='x', y_axis_label='y', width=2500,
+                           plot_height=300)
+        vs = [(k, v) for k, v in features.items() if name in k]
 
-    dev_fig = figure(title="deviations", x_axis_label='x', y_axis_label='y', width=2500, plot_height=200)
-    vs = [(k, v) for k, v in features.items() if "dev" in k]
-    for i, (k, v) in enumerate(vs):
-        dev_fig.line(x, v, legend_label=k, line_width=1, color=NamedColor.__all__[i + 28])
+        for i, (k, v) in enumerate(vs):
+            del features[k]
+            price_fig.line(x, v, legend_label=k, line_width=1, color=NamedColor.__all__[i + 29])
+        return price_fig
 
-    pos_fig = figure(title="positions", x_axis_label='x', y_axis_label='y', width=2500,
-                     plot_height=200)
-    pos_fig.line(x, features["position"], legend_label="position", line_width=1, color="red")
+    price_fig = plot_group("price")
+    dev_fig = plot_group("dev")
+    mom_fig = plot_group("momentum")
+    deb_fig = plot_group("debug")
+    pos_fig = plot_group("position")
+    pos_d_fig = plot_group("pos_change")
 
-    pos_d_fig = figure(title="delta position", x_axis_label='x', y_axis_label='y', width=2500,
-                     plot_height=200)
-    pos_d_fig.line(x, features["pos_change"], legend_label="opened", line_width=1, color="blue")
+    show(column(price_fig, deb_fig, dev_fig, mom_fig, pos_fig, pos_d_fig))
 
-    show(column(price_fig, dev_fig, pos_fig, pos_d_fig))
 
 def _get_position(s: SimulatedServer) -> int:
+    """Find the total amount of .vix position held. """
     result = 0
     if s.account.assets():
         result += s.account.assets()[s.market_data.market_code]
     return result
 
-def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualize=False, **kwargs):
+def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualize=False, **kwargs) -> float:
+    """Run a single simulation of how a trading bot would perform on given dataset.
+
+    First third of the dataset is used as history to bring features to speed,
+    the trading takes place in the remaining 2/3 of the dataset.
+    """
+
     START_BALANCE = 5000
     dataset = dataset or fadeover_4_years()
 
@@ -83,6 +90,11 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualiz
             for k, f in rt.features.items():
                 values[k].append(f.value)
 
+
+            for k, v in rt.debug_info().items():
+                values[f"debug_{k}"].append(v)
+
+
     for p in list(server.account.positions):
         server.account.close(p)
 
@@ -92,6 +104,15 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualiz
     return (server.account.balance - START_BALANCE) / START_BALANCE
 
 if __name__ == "__main__":
+    import os
+    log_name = "sim.log"
+    folder = os.path.dirname(__file__)
+
+    try:
+        os.remove(os.path.join(folder, log_name))
+    except:
+        pass
+
     logger.remove()
-    logger.add("sim.log")
-    simulate(ExpAvgTrader, visualize=True)
+    logger.add(log_name)
+    simulate(ExpAvgTrader, dataset=random_slice(2), visualize=True)

@@ -157,3 +157,7 @@ class RoboTrader:
 
     def open(self, amount, limit = None, stop = None):
         return self.sess.open_position(amount, self.market.code, limit, stop)
+
+    def debug_info(self) -> typing.Dict[str, float]:
+        return {}
+

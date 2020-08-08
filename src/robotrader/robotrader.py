@@ -105,7 +105,6 @@ class RoboTrader:
         logger.debug(f"{self.__class__.__name__} updated features via warmup.")
         for k, f in self.features.items():
             logger.debug(f"{k: >15} = {f.value:.3f}")
-            f.reset_time()
 
     def _pos_risk(self, position):
         """Amount of worst-case loss due to this position. """

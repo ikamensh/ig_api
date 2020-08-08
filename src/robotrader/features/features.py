@@ -1,6 +1,5 @@
 import collections
 import typing
-import datetime
 
 from api.data_model.market_data import MarketData
 
@@ -8,32 +7,27 @@ from api.data_model.market_data import MarketData
 class Feature:
     """ A feature that derives it's value from current and past values of MarketData.
 
-    Designed to support compositional features by putting another feature into `fn` attribute of a parent feature.
+    Designed to support compositional features by putting another feature
+    into `fn` attribute of a parent feature. Calling update on parent updates children features recursively,
+    requesting a value of a feature triggers it's update.
+
+    Alternatively, it's possible to put any callable with signature:
+    Callable[[MarketData], Any] into _fn attribute.
     """
 
     value: float
-    _last_step: datetime = datetime.datetime(year=1, month=1, day=1)
     _fn: typing.Callable = None
 
     def update(self, market_data: "MarketData"):
         if isinstance(self._fn, Feature):
             self._fn.update(market_data)
 
-        if self._last_step < market_data.time:
-            self._update_once(market_data)
-            self._last_step = market_data.time
+        self._update_once(market_data)
 
     def _update_once(self, platform: "MarketData"):
         pass
 
-    def reset_time(self):
-        if isinstance(self._fn, Feature):
-            self._fn.reset_time()
-        if hasattr(self, "_last_step"):
-            delattr(self, "_last_step")
-
-    def __call__(self, platform: "MarketData"):
-        self.update(platform)
+    def __call__(self, *args, **kwargs):
         return self.value
 
 
@@ -45,10 +39,10 @@ class Pow(Feature):
     def __init__(self, fn, pow):
         self.pow = pow
         self._fn: Feature = fn
+        self.value = None
 
-    @property
-    def value(self):
-        return self._fn.value ** self.pow
+    def _update_once(self, platform: "MarketData"):
+        self.value = self._fn(platform) ** self.pow
 
 
 class ExpAvg(Feature):

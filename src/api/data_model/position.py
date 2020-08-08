@@ -4,18 +4,21 @@ from api.exceptions import InvalidBoundingPriceException
 INTEREST_LONG = 1 / 1500
 INTEREST_SHORT = 1 / 4000
 
+
 class Position:
     """A position in the market.
 
     Positions with a deal_id are actual positions, a simulated one otherwise."""
 
-    sim_counter = 1
-
-    def __init__(self, amount: int, market_data: MarketData, price, deal_id = None, limit=None, stop=None):
-        if deal_id is None:
-            deal_id = f"Sim Deal {Position.sim_counter}"
-            Position.sim_counter += 1
-
+    def __init__(
+        self,
+        amount: int,
+        market_data: MarketData,
+        price,
+        deal_id,
+        limit=None,
+        stop=None,
+    ):
         self.deal_id = deal_id
 
         if amount > 0:
@@ -24,7 +27,7 @@ class Position:
             self._win = abs(amount) * price
 
         self.amount = amount
-        self.market_data = market_data
+        self.market_data = market_data  # go to market code?
         self.price = price
 
         try:
@@ -66,9 +69,12 @@ class Position:
     def __hash__(self):
         return hash(self.deal_id)
 
+    @property
+    def market_code(self):
+        return self.market_data.market_code
 
     def profit(self):
-
+        """Calculate profit of closing the position at current prices. """
         if self.amount > 0:
             cost = self._cost
             win = self.amount * self.market_data.bid
@@ -76,19 +82,6 @@ class Position:
             win = self._win
             cost = abs(self.amount) * self.market_data.ask
         return win - cost
-
-
-    def daily_cost(self):
-        """TODO does this belong in the Position class?
-        It's an approximation, maybe Robotrader or SimServer?"""
-
-        ask, bid = self.market_data.ask, self.market_data.bid
-        value = abs(self.amount) * (ask + bid) / 2
-        if self.amount > 0:
-            return value * INTEREST_LONG
-        else:
-            return value * INTEREST_SHORT
-
 
     def margin(self):
         """Minimum balance to keep this position open. """

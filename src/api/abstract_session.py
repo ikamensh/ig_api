@@ -4,6 +4,7 @@ from typing import List, Generator, Tuple
 
 from api.data_model.acc_detail import AccountDetails
 from api.data_model.market_data import MarketData
+from api.data_model.order import Order
 from api.data_model.position import Position
 
 
@@ -18,7 +19,16 @@ class Session(ABC):
     def update_market_data(self) -> None:
         raise NotImplementedError
 
-    def open_position(self, amount: int, market: str, limit=None, stop=None) -> Position:
+    def open_position(self, market: str, amount: int, limit=None, stop=None) -> Position:
+        raise NotImplementedError
+
+    def get_orders(self) -> List[Order]:
+        raise NotImplementedError
+
+    def create_order(self, market: str, amount, level, limit = None, stop = None) -> Order:
+        raise NotImplementedError
+
+    def delete_order(self, order: Order) -> None:
         raise NotImplementedError
 
     def close_position(self, pos: Position) -> None:

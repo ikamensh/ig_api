@@ -14,7 +14,7 @@ def fade_over(seq: typing.List[MarketHistory], overlap = 0.15) -> MarketHistory:
     n = len(cur)
     cur_it = iter(cur)
 
-    result = MarketHistory()
+    result = MarketHistory(cur.market)
     date_time = datetime(year=1970, month=1, day=1)
 
     def add_record(low, high, delta):

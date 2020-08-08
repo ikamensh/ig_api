@@ -60,7 +60,7 @@ def random_slice(years: float, source: MarketHistory = cboe_vix, resolution: int
 
     start = random.randint(0, l - size)
 
-    result = MarketHistory()
+    result = MarketHistory(market=source.market)
     rate = max(resolution // source.steps_per_day, 1)
 
     date_time = datetime(year=1970, month=1, day=1)

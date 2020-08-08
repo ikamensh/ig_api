@@ -25,6 +25,31 @@ class IgSession(Session):
         self._login(identifier, password)
         self._latest_prices: Dict[str, MarketData] = {}
 
+    def create_order(self, market, amount, level, limit=None, stop=None):
+        create_order_url = self._master_url + "workingorders/otc"
+        body = {
+            "epic": market,
+            "expiry": "DFB",
+            "size": abs(amount),
+            "level": level,
+            "type": "LIMIT",
+            "currencyCode": "EUR",
+            "timeInForce": "GOOD_TILL_CANCELLED",
+            "guaranteedStop": False,
+            "direction": "BUY" if amount > 0 else "SELL",
+        }
+
+        if limit:
+            body["limitLevel"] = limit
+        if stop:
+            body["stopLevel"] = stop
+
+        with self._use_version(2):
+            r = requests.post(url=create_order_url, headers=self._headers, json=body)
+        assert r.status_code == 200, r.json()
+
+        return r.json()["dealReference"]
+
     def get_positions(self) -> List[Position]:
         positions_url = self._master_url + "positions/"
 

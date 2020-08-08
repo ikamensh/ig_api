@@ -1,27 +1,31 @@
 import collections
 import typing
 
+from api.data_model.order import Order
 from api.exceptions import InsufficientFundsException
 from api.sim._sim_market_data import SimMarket
 
 from loguru import logger
 
 from api.data_model.position import Position
+import markets
 
-TAX_RATE = 0.30
 
 
 class SimAccount:
     """ Simulated account, performing taxation, ensuring the margin, etc.
 
     Currently supports only a single market positions defined by price_data.market"""
-
+    TAX_RATE = 0.30
+    long_interest_rate: typing.Dict[str, float] = {markets.vix.code: 1/1500}
+    short_interest_rate: typing.Dict[str, float] = {markets.vix.code: -1/1000}
 
     def __init__(
         self, market_data: SimMarket, balance: float, steps_per_day: int,
     ):
         self.balance = balance
         self.positions: typing.List[Position] = []
+        self.orders: typing.List[Order] = []
         self.market_data = market_data
         self.steps_per_day = steps_per_day
         self.steps_counter = 0
@@ -30,6 +34,8 @@ class SimAccount:
         self.year_start_balance = balance
         self._margin = None
         self._profit = None
+        self._orders_counter = 0
+        self._positions_counter = 0
 
     def assets(self) -> typing.Dict[str, int]:
         """Total amount of the assets bought across all positions (negative for shorts).
@@ -45,7 +51,7 @@ class SimAccount:
     def _owed_tax(self):
         """Calculates how much tax is owed this year. """
         gain = self.balance - self.year_start_balance
-        return gain * TAX_RATE
+        return gain * self.TAX_RATE
 
     def _settle_tax(self):
         """Pay / refund tax."""
@@ -61,7 +67,9 @@ class SimAccount:
     def margin(self):
         """Minimum balance to keep all positions open. """
         if self._margin is None:
-            self._margin = sum(p.margin() for p in self.positions)
+             result = sum(p.margin() for p in self.positions)
+             result += sum(o.margin() for o in self.orders)
+             self._margin = result
         return self._margin
 
 
@@ -76,7 +84,17 @@ class SimAccount:
         """Free capital in the account. """
         return self.balance + self.profit() - self.margin()
 
-    def open(self, amt: int, market="vix", limit=None, stop=None) -> Position:
+    def create_order(self, market_code, amount, level, limit = None, stop = None) -> Order:
+        order = Order(market_code, amount, level, limit, stop, deal_id=self._orders_counter)
+        self._orders_counter += 1
+
+        if self.available > order.margin():
+            self.orders.append(order)
+            return order
+        else:
+            raise InsufficientFundsException
+
+    def open(self, amt: int, market=markets.vix.code, limit=None, stop=None) -> Position:
         """
         Open a new position at market price.
 
@@ -88,12 +106,14 @@ class SimAccount:
         Returns:
             the new position object
         """
+        assert market == self.market_data.market_code
         assert isinstance(amt, int)
         assert amt != 0
 
         price = self.market_data.ask if amt > 0 else self.market_data.bid
 
-        pos = Position(amt, self.market_data, price, limit=limit, stop=stop)
+
+        pos = Position(amt, self.market_data, price, limit=limit, stop=stop, deal_id=self._next_pos_id())
         if self.available >= pos.margin():
             self.positions.append(pos)
             self._profit = None
@@ -106,6 +126,11 @@ class SimAccount:
             return pos
         else:
             raise InsufficientFundsException
+
+    def _next_pos_id(self):
+        deal_id = f"Sim Deal {self._positions_counter}"
+        self._positions_counter += 1
+        return deal_id
 
     def close(self, position: Position):
         """Close a position at the market price."""
@@ -151,7 +176,17 @@ class SimAccount:
             if not self.day % 7 == 0:
                 days_to_pay += 2
             for p in self.positions:
-                self.balance -= days_to_pay * p.daily_cost()
+                self.balance -= days_to_pay * self._daily_cost(p)
+
+    def _daily_cost(self, pos: Position):
+        """ Calculate cost of holding a position open for a day. """
+
+        ask, bid = pos.market_data.ask, pos.market_data.bid
+        value = abs(pos.amount) * (ask + bid) / 2
+        if pos.amount > 0:
+            return value * self.long_interest_rate[pos.market_code]
+        else:
+            return value * self.short_interest_rate[pos.market_code]
 
     def stop_limit(self):
         """ Close positions according to set stops and limits. """
@@ -176,6 +211,34 @@ class SimAccount:
 
     def _ensure_margin(self):
         """Close positions until margin requirements are satisfied. """
+        while self.available < 0 and self.orders:
+            self.orders.pop()
+
         while self.available < 0 and self.positions:
             pos = self.positions[-1]
             self.close(pos)
+
+    def process_orders(self) -> None:
+        """ Open positions for orders if desired price is available. """
+        converted = []
+
+        def convert(order, price):
+            p = Position(order.amount, self.market_data, price, deal_id=self._next_pos_id())
+            self.positions.append(p)
+            converted.append(order)
+
+        for o in self.orders:
+            if o.amount > 0:
+                best_price = self.market_data.low_ask
+                if o.level >= best_price:
+                    price = min(self.market_data.high_ask, o.level)
+                    convert(o, price)
+            else:
+                best_price = self.market_data.high_bid
+                if o.level <= best_price:
+                    price = max(self.market_data.low_bid, o.level)
+                    convert(o, price)
+
+        for o in converted:
+            self.orders.remove(o)
+

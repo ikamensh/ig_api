@@ -8,7 +8,7 @@ from datasets.market_history import Resolutions
 def test_price_history(sess):
 
     end = datetime.datetime.now()
-    start = end - datetime.timedelta(days=1)
+    start = end - datetime.timedelta(days=7)
 
     history_gen = sess.price_history(markets.vix.code,
                                      resolution=Resolutions.HOUR_2,

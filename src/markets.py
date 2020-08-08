@@ -1,4 +1,3 @@
-
 class MarketId:
     def __init__(self, code, name = None):
         """

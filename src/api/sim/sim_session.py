@@ -3,6 +3,7 @@ from typing import Generator, Tuple, List
 
 from api.abstract_session import Session
 from api.data_model.acc_detail import AccountDetails
+from api.data_model.order import Order
 from datasets.market_history import MarketHistory
 from api.data_model.market_data import MarketData
 from api.data_model.position import Position
@@ -46,12 +47,21 @@ class SimulatedServer:
 class SimSession(Session):
     """A connection to a simulated server. Conforms the same API as real IgSession."""
 
+    def get_orders(self) -> List[Order]:
+        return list(self._server.account.orders)
+
+    def create_order(self, market: str, amount, level, limit=None, stop=None) -> Order:
+        return self._server.account.create_order(market, amount, level, limit, stop)
+
+    def delete_order(self, order: Order) -> None:
+        self._server.account.orders.remove(order)
+
     def __init__(self, server: SimulatedServer):
         self._server = server
         self._market_data = SimMarket(server.market_data.market_code)
 
     def get_positions(self) -> List[Position]:
-        return self._server.account.positions
+        return list(self._server.account.positions)
 
     def get_market_data(self, market_code) -> MarketData:
         assert market_code == self._server.market_data.market_code

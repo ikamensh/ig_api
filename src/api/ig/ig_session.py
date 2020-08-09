@@ -7,8 +7,9 @@ from typing import List, Generator, Tuple, Dict
 from api.abstract_session import Session
 from api.data_model.acc_detail import AccountDetails
 from api.data_model.market_data import MarketData
+from api.data_model.order import Order
 from api.data_model.position import Position
-from api.exceptions import LoginError
+from api.exceptions import LoginError, MarketClosedException, CantOpenPosition
 from api.data_model.snapshot import Snapshot
 from loguru import logger
 
@@ -26,6 +27,10 @@ class IgSession(Session):
         self._latest_prices: Dict[str, MarketData] = {}
 
     def create_order(self, market, amount, level, limit=None, stop=None):
+        deal_id = self._create_order(amount, level, limit, market, stop)
+        return self._deal_confirm_order(deal_id)
+
+    def _create_order(self, amount, level, limit, market, stop):
         create_order_url = self._master_url + "workingorders/otc"
         body = {
             "epic": market,
@@ -38,16 +43,13 @@ class IgSession(Session):
             "guaranteedStop": False,
             "direction": "BUY" if amount > 0 else "SELL",
         }
-
         if limit:
             body["limitLevel"] = limit
         if stop:
             body["stopLevel"] = stop
-
         with self._use_version(2):
             r = requests.post(url=create_order_url, headers=self._headers, json=body)
         assert r.status_code == 200, r.json()
-
         return r.json()["dealReference"]
 
     def get_positions(self) -> List[Position]:
@@ -101,7 +103,7 @@ class IgSession(Session):
 
         # TODO handle insufficient funds
         ref = self._open_position(market, amount)
-        return self._deal_confirm(ref)
+        return self._deal_confirm_position(ref)
 
     def close_position(self, pos: Position) -> None:
         otc_url = self._master_url + "positions/otc"
@@ -150,6 +152,12 @@ class IgSession(Session):
     def price_history(
         self, market: str, resolution: str, start: datetime, end: datetime,
     ) -> Generator[Tuple[str, float, float, float], None, None]:
+        """ Allows iteration over historical price data.
+
+        Resolution must be taken from a list of supported values in Resolutions class.
+
+        Format: iterator yields tuples (timestamp: str, low, high, spread)
+        """
         prices_url = self._master_url + "prices/"
 
         start = start.isoformat()
@@ -278,33 +286,51 @@ class IgSession(Session):
 
         return r.json()["dealReference"]
 
-    def _deal_confirm(self, deal_reference) -> Position:
-        trade_confirm_url = self._master_url + "confirms/"
+    def _deal_confirm_position(self, deal_reference) -> Position:
+        reason, reply, status = self._deal_confirm(deal_reference)
 
-        r = requests.get(
-            url=f"{trade_confirm_url}/{deal_reference}", headers=self._headers
-        )
-        assert r.status_code == 200, r.text
+        if status == "REJECTED":
+            if 'MARKET_CLOSED' in reason:
+                raise MarketClosedException(f"Failed to open position, the market is closed.")
+            else:
+                raise CantOpenPosition(f"Deal was rejected for reason: {reason}")
 
-        reply = r.json()
-        status, reason = reply["dealStatus"], reply["reason"]
-        print(status, reason)
-
-        if status != "ACCEPTED":
-            raise Exception(f"Failed to open position, reason: {reason}.")
-
-        deal_id = reply["dealId"]
-        price = float(reply["level"])
-
-        amount = int(reply["size"])
-        if reply["direction"] == "SELL":
-            amount *= -1
-
-        market = reply["epic"]
+        amount, deal_id, level, market = self._confirmation_data(reply)
 
         return Position(
             amount=amount,
             market_data=self.get_market_data(market),
-            price=price,
+            price=level,
             deal_id=deal_id,
         )
+
+    def _deal_confirm_order(self, deal_reference) -> Order:
+        reason, reply, status = self._deal_confirm(deal_reference)
+        assert status == "ACCEPTED", (status, reason)
+        amount, deal_id, level, market = self._confirmation_data(reply)
+
+        return Order(
+            market,
+            amount=amount,
+            level=level,
+            deal_id=deal_id,
+        )
+
+    def _confirmation_data(self, reply):
+        deal_id = reply["dealId"]
+        level = float(reply["level"])
+        amount = int(reply["size"])
+        if reply["direction"] == "SELL":
+            amount *= -1
+        market = reply["epic"]
+        return amount, deal_id, level, market
+
+    def _deal_confirm(self, deal_reference):
+        trade_confirm_url = self._master_url + "confirms/"
+        r = requests.get(
+            url=f"{trade_confirm_url}/{deal_reference}", headers=self._headers
+        )
+        assert r.status_code == 200, r.text
+        reply = r.json()
+        status, reason = reply["dealStatus"], reply["reason"]
+        return reason, reply, status

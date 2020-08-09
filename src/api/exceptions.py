@@ -6,6 +6,10 @@ class CantOpenPosition(Exception):
     pass
 
 
+class MarketClosedException(Exception):
+    pass
+
+
 class InvalidBoundingPriceException(CantOpenPosition):
     pass
 

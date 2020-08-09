@@ -11,14 +11,14 @@ from api.data_model.position import Position
 import markets
 
 
-
 class SimAccount:
     """ Simulated account, performing taxation, ensuring the margin, etc.
 
     Currently supports only a single market positions defined by price_data.market"""
+
     TAX_RATE = 0.30
-    long_interest_rate: typing.Dict[str, float] = {markets.vix.code: 1/1500}
-    short_interest_rate: typing.Dict[str, float] = {markets.vix.code: -1/1000}
+    long_interest_rate: typing.Dict[str, float] = {markets.vix.code: 1 / 1500}
+    short_interest_rate: typing.Dict[str, float] = {markets.vix.code: -1 / 1000}
 
     def __init__(
         self, market_data: SimMarket, balance: float, steps_per_day: int,
@@ -67,11 +67,10 @@ class SimAccount:
     def margin(self):
         """Minimum balance to keep all positions open. """
         if self._margin is None:
-             result = sum(p.margin() for p in self.positions)
-             result += sum(o.margin() for o in self.orders)
-             self._margin = result
+            result = sum(p.margin() for p in self.positions)
+            result += sum(o.margin() for o in self.orders)
+            self._margin = result
         return self._margin
-
 
     def profit(self):
         """Total profit / loss (negative profit) from all open positions. """
@@ -84,8 +83,10 @@ class SimAccount:
         """Free capital in the account. """
         return self.balance + self.profit() - self.margin()
 
-    def create_order(self, market_code, amount, level, limit = None, stop = None) -> Order:
-        order = Order(market_code, amount, level, limit, stop, deal_id=self._orders_counter)
+    def create_order(self, market_code, amount, level, limit=None, stop=None) -> Order:
+        order = Order(
+            market_code, amount, level, limit, stop, deal_id=self._orders_counter
+        )
         self._orders_counter += 1
 
         if self.available > order.margin():
@@ -94,7 +95,9 @@ class SimAccount:
         else:
             raise InsufficientFundsException
 
-    def open(self, amt: int, market=markets.vix.code, limit=None, stop=None) -> Position:
+    def open(
+        self, amt: int, market=markets.vix.code, limit=None, stop=None
+    ) -> Position:
         """
         Open a new position at market price.
 
@@ -112,8 +115,14 @@ class SimAccount:
 
         price = self.market_data.ask if amt > 0 else self.market_data.bid
 
-
-        pos = Position(amt, self.market_data, price, limit=limit, stop=stop, deal_id=self._next_pos_id())
+        pos = Position(
+            amt,
+            self.market_data,
+            price,
+            limit=limit,
+            stop=stop,
+            deal_id=self._next_pos_id(),
+        )
         if self.available >= pos.margin():
             self.positions.append(pos)
             self._profit = None
@@ -150,10 +159,11 @@ class SimAccount:
         self._margin = None
 
         self._ensure_margin()
-        self.stop_limit()
+        self._process_stop_limit()
 
         self._track_date()
         self._collect_interest()
+        self._process_orders()
 
     def _track_date(self):
         """ Track days / years (for tax and interest purposes)."""
@@ -188,7 +198,7 @@ class SimAccount:
         else:
             return value * self.short_interest_rate[pos.market_code]
 
-    def stop_limit(self):
+    def _process_stop_limit(self):
         """ Close positions according to set stops and limits. """
         for p in list(self.positions):
             if p.amount > 0:  # long
@@ -218,12 +228,19 @@ class SimAccount:
             pos = self.positions[-1]
             self.close(pos)
 
-    def process_orders(self) -> None:
+    def _process_orders(self) -> None:
         """ Open positions for orders if desired price is available. """
         converted = []
 
         def convert(order, price):
-            p = Position(order.amount, self.market_data, price, deal_id=self._next_pos_id())
+            p = Position(
+                order.amount,
+                self.market_data,
+                price,
+                deal_id=self._next_pos_id(),
+                limit=order.limit,
+                stop=order.stop,
+            )
             self.positions.append(p)
             converted.append(order)
 
@@ -241,4 +258,3 @@ class SimAccount:
 
         for o in converted:
             self.orders.remove(o)
-

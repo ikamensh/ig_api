@@ -1,25 +1,25 @@
-from api.sim._sim_account import SimAccount
+from datetime import timedelta
+
+import markets
 
 
-def test_holding_long_interest(price_data):
-    STEPS_PER_DAY = 4
+def test_holding_long_interest(acc):
     balance_init = 500
-    a = SimAccount(price_data, balance=balance_init, steps_per_day=STEPS_PER_DAY)
-    pos = a.open(10)
+    acc.balance = balance_init
+    pos = acc.open(10, markets.vix.code)
 
-    for i in range(STEPS_PER_DAY*10):
-        a.step()
+    for i in range(10):
+        acc.step(acc._last_date + timedelta(hours=3))
 
-    assert a.balance != balance_init
+    assert acc.balance != balance_init
 
 
-def test_holding_short_interest(price_data):
-    STEPS_PER_DAY = 4
+def test_holding_short_interest(acc):
     balance_init = 500
-    a = SimAccount(price_data, balance=balance_init, steps_per_day=STEPS_PER_DAY)
-    pos = a.open(-10)
+    acc.balance = balance_init
+    pos = acc.open(-10, markets.vix.code)
 
-    for i in range(STEPS_PER_DAY * 10):
-        a.step()
+    for i in range(10):
+        acc.step(acc._last_date + timedelta(hours=3))
 
-    assert a.balance != balance_init
+    assert acc.balance != balance_init

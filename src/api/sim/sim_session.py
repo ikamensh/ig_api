@@ -11,37 +11,41 @@ from api.sim._sim_account import SimAccount
 from api.sim._sim_market_data import SimMarket
 
 
-class SimulatedServer:
+class SimServer:
     """Simulates the trading platform. """
 
-    def __init__(self, balance: int, history: MarketHistory):
-        self.history = history
-        self.steps_iter = iter(history.keys())
-        self.market_data = SimMarket(history.market.code)
-        self.cur_time = next(self.steps_iter)
+    def __init__(self, balance: int, history: List[MarketHistory]):
+        """Sim server will operate on the period of history where all markets have data."""
+
+        common_window = max(h.start for h in history), min(h.end for h in history)
+        history = [h.slice(*common_window) for h in history]
+
+        self.market_history = {h.market.code: h for h in history}
+        self.market_data = {h.market.code: SimMarket(h.market.code) for h in history}
+
+
+        # self.steps_iter = iter(history.keys())
+        self.cur_time = common_window[0]
         self._set_prices()
-        self.account = SimAccount(
-            self.market_data, balance, steps_per_day=history.steps_per_day
-        )
+        self.account = SimAccount(self, balance, self.cur_time)
 
     def price_history(
         self, market: str, resolution: str, start: datetime, end: datetime
     ):
-        assert market == self.history.market.code
 
         end = min(self.cur_time, end)
         # assert resolution == self.history.steps_per_day TODO
-        for k, v in self.history.slice(start, end).items():
+        for k, v in self.market_history[market].slice(start, end).items():
             yield (k.isoformat(), *v)
 
     def _set_prices(self):
-        low, high, delta = self.history[self.cur_time]
-        self.market_data.set_prices(low, high, delta)
+        for k, v in self.market_data.items():
+            low, high, delta = self.market_history[k][self.cur_time]
+            v.set_prices(low, high, delta)
 
     def step(self):
-        self.cur_time = next(self.steps_iter)
         self._set_prices()
-        self.account.step()
+        self.account.step(self.cur_time)
 
 
 class SimSession(Session):
@@ -56,7 +60,7 @@ class SimSession(Session):
     def delete_order(self, order: Order) -> None:
         self._server.account.orders.remove(order)
 
-    def __init__(self, server: SimulatedServer):
+    def __init__(self, server: SimServer):
         self._server = server
         self._market_data = SimMarket(server.market_data.market_code)
 
@@ -68,9 +72,10 @@ class SimSession(Session):
         return self._market_data
 
     def update_market_data(self) -> None:
-        if self._market_data.time <  self._server.market_data.time:
-            src = self._server.market_data
-            self._market_data.set_prices(src.low, src.high, src.delta, time=src.time)
+        for k, v in self._server.market_data.items():
+            if self._market_data.time < self._server.market_data.time:
+                src = self._server.market_data
+                self._market_data.set_prices(src.low, src.high, src.delta, time=src.time)
 
     def open_position(
         self, amount: int, market: str, limit=None, stop=None

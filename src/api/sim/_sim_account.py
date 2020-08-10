@@ -1,15 +1,26 @@
 import collections
 import typing
+from contextlib import contextmanager
+from datetime import datetime
 
 from api.data_model.order import Order
 from api.exceptions import InsufficientFundsException
-from api.sim._sim_market_data import SimMarket
 
 from loguru import logger
 
 from api.data_model.position import Position
 import markets
+from api.sim._sim_market_data import SimMarket
 
+
+@contextmanager
+def _moment_prices(self, bid, ask):
+    """Use specific price between current min and max price."""
+    old_ask, old_bid = self.ask, self.bid
+    self.ask = min(self.high_ask, max(self.low_ask, ask))
+    self.bid = min(self.high_bid, max(self.low_bid, bid))
+    yield
+    self.ask, self.bid = old_ask, old_bid
 
 class SimAccount:
     """ Simulated account, performing taxation, ensuring the margin, etc.
@@ -21,15 +32,13 @@ class SimAccount:
     short_interest_rate: typing.Dict[str, float] = {markets.vix.code: -1 / 1000}
 
     def __init__(
-        self, market_data: SimMarket, balance: float, steps_per_day: int,
+        self, market_data: typing.Dict[str, SimMarket], balance: float, start_date: datetime
     ):
         self.balance = balance
         self.positions: typing.List[Position] = []
         self.orders: typing.List[Order] = []
         self.market_data = market_data
-        self.steps_per_day = steps_per_day
-        self.steps_counter = 0
-        self.day = 0
+        self._last_date = start_date
         self.year_tax = 0
         self.year_start_balance = balance
         self._margin = None
@@ -96,7 +105,7 @@ class SimAccount:
             raise InsufficientFundsException
 
     def open(
-        self, amt: int, market=markets.vix.code, limit=None, stop=None
+        self, amt: int, market, limit=None, stop=None
     ) -> Position:
         """
         Open a new position at market price.
@@ -109,15 +118,15 @@ class SimAccount:
         Returns:
             the new position object
         """
-        assert market == self.market_data.market_code
         assert isinstance(amt, int)
         assert amt != 0
+        market_data = self.market_data[market]
 
-        price = self.market_data.ask if amt > 0 else self.market_data.bid
+        price = market_data.ask if amt > 0 else market_data.bid
 
         pos = Position(
             amt,
-            self.market_data,
+            market_data,
             price,
             limit=limit,
             stop=stop,
@@ -153,7 +162,7 @@ class SimAccount:
         self._margin = None
         self._settle_tax()
 
-    def step(self):
+    def step(self, new_date: datetime):
         """Time step. Should be called every time prices are updated."""
         self._profit = None
         self._margin = None
@@ -161,32 +170,22 @@ class SimAccount:
         self._ensure_margin()
         self._process_stop_limit()
 
-        self._track_date()
-        self._collect_interest()
+        self._collect_interest(new_date)
         self._process_orders()
+        assert new_date >= self._last_date
+        if new_date.year > self._last_date.year:
+            self.year_tax = 0
+            self.year_start_balance = self.balance
+        self._last_date = new_date
 
-    def _track_date(self):
-        """ Track days / years (for tax and interest purposes)."""
-        self.steps_counter += 1
-        if not self.steps_counter % self.steps_per_day:
-            self.steps_counter = 0
-            self.day += 1
-            if not self.day % 7 == 5:
-                self.day += 2
-
-            if self.day >= 365:
-                self.year_tax = 0
-                self.year_start_balance = self.balance
-                self.day = 0
-
-    def _collect_interest(self):
+    def _collect_interest(self, new_date: datetime):
         """ Depends on correct date being already set. """
-        if not self.steps_counter % self.steps_per_day:
-            days_to_pay = 1
-            if not self.day % 7 == 0:
-                days_to_pay += 2
-            for p in self.positions:
-                self.balance -= days_to_pay * self._daily_cost(p)
+
+        elapsed = new_date - self._last_date
+        days_to_pay = elapsed.total_seconds() / 86_400
+
+        for p in self.positions:
+            self.balance -= days_to_pay * self._daily_cost(p)
 
     def _daily_cost(self, pos: Position):
         """ Calculate cost of holding a position open for a day. """
@@ -202,21 +201,21 @@ class SimAccount:
         """ Close positions according to set stops and limits. """
         for p in list(self.positions):
             if p.amount > 0:  # long
-                if p.limit is not None and p.limit <= self.market_data.high_bid:
-                    with self.market_data.moment_prices(bid=p.limit, ask=p.limit):
+                if p.limit is not None and p.limit <= p.market_data.high_bid:
+                    with _moment_prices( p.market_data, bid=p.limit, ask=p.limit):
                         self.close(p)
 
-                elif p.stop is not None and p.stop >= self.market_data.low_bid:
-                    with self.market_data.moment_prices(bid=p.stop, ask=p.stop):
+                elif p.stop is not None and p.stop >= p.market_data.low_bid:
+                    with _moment_prices( p.market_data, bid=p.stop, ask=p.stop):
                         self.close(p)
 
             else:  # short
-                if p.limit is not None and p.limit >= self.market_data.low_ask:
-                    with self.market_data.moment_prices(bid=p.limit, ask=p.limit):
+                if p.limit is not None and p.limit >= p.market_data.low_ask:
+                    with _moment_prices( p.market_data, bid=p.limit, ask=p.limit):
                         self.close(p)
 
-                elif p.stop is not None and p.stop < self.market_data.high_ask:
-                    with self.market_data.moment_prices(bid=p.stop, ask=p.stop):
+                elif p.stop is not None and p.stop < p.market_data.high_ask:
+                    with _moment_prices( p.market_data, bid=p.stop, ask=p.stop):
                         self.close(p)
 
     def _ensure_margin(self):
@@ -233,9 +232,10 @@ class SimAccount:
         converted = []
 
         def convert(order, price):
+            market_data = self.market_data[order.market_code]
             p = Position(
                 order.amount,
-                self.market_data,
+                market_data,
                 price,
                 deal_id=self._next_pos_id(),
                 limit=order.limit,
@@ -245,15 +245,16 @@ class SimAccount:
             converted.append(order)
 
         for o in self.orders:
+            market_data = self.market_data[o.market_code]
             if o.amount > 0:
-                best_price = self.market_data.low_ask
+                best_price = market_data.low_ask
                 if o.level >= best_price:
-                    price = min(self.market_data.high_ask, o.level)
+                    price = min(market_data.high_ask, o.level)
                     convert(o, price)
             else:
-                best_price = self.market_data.high_bid
+                best_price = market_data.high_bid
                 if o.level <= best_price:
-                    price = max(self.market_data.low_bid, o.level)
+                    price = max(market_data.low_bid, o.level)
                     convert(o, price)
 
         for o in converted:

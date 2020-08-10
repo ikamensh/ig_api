@@ -1,48 +1,46 @@
 import pytest
 
-from api.sim._sim_account import SimAccount
+import markets
+
 
 @pytest.mark.parametrize("amount", [-50, 50])
-def test_profit(amount, price_data):
-    balance_init = 5000
-    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
-    pos = a.open(amount)
-    assert a.year_tax == 0
+def test_profit(acc, amount, price_data):
+    balance_init = acc.balance
+    pos = acc.open(amount, markets.vix.code)
+    assert acc.year_tax == 0
 
-    price_data.change_price(amount//10)
+    price_data[markets.vix.code].change_price(amount//10)
     profit = pos.profit()
-    a.close(pos)
+    acc.close(pos)
 
     assert balance_init + profit > balance_init
-    assert a.year_tax > 0
+    assert acc.year_tax > 0
 
 
 @pytest.mark.parametrize("amount", [-50, 50])
-def test_loss_compensation(amount, price_data):
+def test_loss_compensation(acc, amount, price_data):
 
     paid_tax = 1000
-    balance_init = 5000
-    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
-    a.year_tax = paid_tax
-    pos = a.open(amount)
+    balance_init = acc.balance
+    acc.year_tax = paid_tax
+    pos = acc.open(amount, markets.vix.code)
 
-    price_data.change_price( - amount // 10)
+    price_data[markets.vix.code].change_price( - amount // 10)
     loss = -pos.profit()
-    a.close(pos)
+    acc.close(pos)
 
-    assert balance_init - loss < a.balance
-    assert a.year_tax < paid_tax
+    assert balance_init - loss < acc.balance
+    assert acc.year_tax < paid_tax
 
 
 @pytest.mark.parametrize("amount", [-50, 50])
-def test_loss_no_compensation(amount, price_data):
-    balance_init = 5000
-    a = SimAccount(price_data, balance=balance_init, steps_per_day=100)
-    pos = a.open(amount)
+def test_loss_no_compensation(acc, amount, price_data):
+    balance_init = acc.balance
+    pos = acc.open(amount, markets.vix.code)
 
-    price_data.change_price(- amount // 10)
+    price_data[markets.vix.code].change_price(- amount // 10)
     loss = -pos.profit()
-    a.close(pos)
+    acc.close(pos)
 
-    assert balance_init - loss == a.balance
-    assert a.year_tax == 0
+    assert balance_init - loss == acc.balance
+    assert acc.year_tax == 0

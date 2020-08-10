@@ -6,7 +6,7 @@ from bokeh.layouts import column
 from bokeh.plotting import figure, show
 from loguru import logger
 
-from api.sim.sim_session import SimSession, SimulatedServer
+from api.sim.sim_session import SimSession, SimServer
 from datasets.fade_over import fadeover_4_years
 from datasets.market_history import MarketHistory
 from datasets.random_slice import random_slice
@@ -40,7 +40,7 @@ def _visualize(features):
     show(column(price_fig, deb_fig, dev_fig, mom_fig, pos_fig, pos_d_fig))
 
 
-def _get_position(s: SimulatedServer) -> int:
+def _get_position(s: SimServer) -> int:
     """Find the total amount of .vix position held. """
     result = 0
     if s.account.assets():
@@ -63,7 +63,7 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualiz
     future = dataset.slice(start=start_date)
     print(len(history), len(future))
 
-    server = SimulatedServer(balance=START_BALANCE, history=future)
+    server = SimServer(balance=START_BALANCE, history=future)
     sess = SimSession(server)
 
     rt: RoboTrader = rt_cls(sess, dataset.market, dataset.steps_per_day, **kwargs)

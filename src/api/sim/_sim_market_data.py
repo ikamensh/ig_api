@@ -35,13 +35,3 @@ class SimMarket(MarketData):
             self.time += datetime.timedelta(days=1)
         else:
             self.time = time
-
-
-    @contextmanager
-    def moment_prices(self, bid, ask):
-        """Use specific price between current min and max price."""
-        old_ask, old_bid = self.ask, self.bid
-        self.ask = min(self.high_ask, max(self.low_ask, ask))
-        self.bid = min(self.high_bid, max(self.low_bid, bid))
-        yield
-        self.ask, self.bid = old_ask, old_bid

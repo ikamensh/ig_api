@@ -1,3 +1,4 @@
+import bisect
 import csv
 import os
 from datetime import datetime, timedelta
@@ -36,6 +37,7 @@ class MarketHistory:
         self._data: Dict[datetime, Tuple[float, float, float]] = {}
         self._start = None
         self._end = None
+        self._keys = None
         self.steps_per_day = None
         self._dirty_bit = False
 
@@ -46,6 +48,7 @@ class MarketHistory:
         self._start = srtd[0][0] if self._data else None
         self._end = srtd[-1][0] if self._data else None
         self._data = {k: v for k, v in sorted(self._data.items())}
+        self._keys = list(self._data.keys())
 
         if srtd:
             days = [datetime(year=k.year, month=k.month, day=k.day) for k in self._data]
@@ -162,7 +165,15 @@ class MarketHistory:
         return len(self._data)
 
     def __getitem__(self, item):
-        return self._data[item]
+        if self._dirty_bit:
+            self.compute_start_end_step()
+
+        if item in self._data:
+            return self._data[item]
+        else:
+            idx = bisect.bisect(self._keys, item) - 1
+            key = self._keys[idx]
+            return self._data[key]
 
     def plot(self):
 

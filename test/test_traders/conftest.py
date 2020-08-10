@@ -1,13 +1,13 @@
 import pytest
 
-from api.sim.sim_session import SimSession, SimulatedServer
+from api.sim.sim_session import SimSession, SimServer
 
 from datasets.historical import ig_vix
 
 @pytest.fixture()
 def sim_session():
 
-    s = SimulatedServer(balance=5000, history=ig_vix)
+    s = SimServer(balance=5000, history=ig_vix)
     sess = SimSession(s)
 
     yield sess

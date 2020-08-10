@@ -22,4 +22,4 @@ class TestMarketData(SimMarket):
 def price_data():
     p = TestMarketData(market_code=markets.vix.code)
     p.set_prices(low=10, high=12, delta=1)
-    yield p
+    yield {markets.vix.code: p}

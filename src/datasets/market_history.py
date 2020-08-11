@@ -171,6 +171,8 @@ class MarketHistory:
         if item in self._data:
             return self._data[item]
         else:
+            if item < self.start:
+                raise KeyError(f"Dataset starts at {self.start}, prices at {item} are not known.")
             idx = bisect.bisect(self._keys, item) - 1
             key = self._keys[idx]
             return self._data[key]

@@ -9,7 +9,7 @@ from api.data_model.acc_detail import AccountDetails
 from api.data_model.market_data import MarketData
 from api.data_model.order import Order
 from api.data_model.position import Position
-from api.exceptions import LoginError, MarketClosedException, CantOpenPosition
+from api.exceptions import LoginError, MarketClosedException, CantOpenPosition, MarketNotFoundError
 from api.data_model.snapshot import Snapshot
 from loguru import logger
 
@@ -242,7 +242,10 @@ class IgSession(Session):
         with self._use_version(3):
             r = requests.get(url=markets_url + market_code, headers=self._headers)
 
-        assert r.status_code == 200
+        if r.status_code == 404  and "epic.unavailable" in r.text:
+            raise MarketNotFoundError(f"Market {market_code} is not found.")
+
+        assert r.status_code == 200, r.text
         reply = r.json()
         snap = Snapshot(reply["snapshot"])
         instrument_el = reply["instrument"]

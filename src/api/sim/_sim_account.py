@@ -94,7 +94,7 @@ class SimAccount:
 
     def create_order(self, market_code, amount, level, limit=None, stop=None) -> Order:
         order = Order(
-            market_code, amount, level, limit, stop, deal_id=self._orders_counter
+            market_code, amount, level, limit, stop, deal_id=str(self._orders_counter)
         )
         self._orders_counter += 1
 

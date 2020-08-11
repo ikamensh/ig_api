@@ -4,6 +4,7 @@ from typing import Generator, Tuple, List
 from api.abstract_session import Session
 from api.data_model.acc_detail import AccountDetails
 from api.data_model.order import Order
+from api.exceptions import MarketNotFoundError
 from datasets.market_history import MarketHistory
 from api.data_model.market_data import MarketData
 from api.data_model.position import Position
@@ -27,7 +28,7 @@ class SimServer:
         # self.steps_iter = iter(history.keys())
         self.cur_time = common_window[0]
         self._set_prices()
-        self.account = SimAccount(self, balance, self.cur_time)
+        self.account = SimAccount(self.market_data, balance, self.cur_time)
 
     def price_history(
         self, market: str, resolution: str, start: datetime, end: datetime
@@ -51,6 +52,10 @@ class SimServer:
 class SimSession(Session):
     """A connection to a simulated server. Conforms the same API as real IgSession."""
 
+    def __init__(self, server: SimServer):
+        self._server = server
+        self._market_data = {k: SimMarket(k) for k in server.market_data}
+
     def get_orders(self) -> List[Order]:
         return list(self._server.account.orders)
 
@@ -60,27 +65,24 @@ class SimSession(Session):
     def delete_order(self, order: Order) -> None:
         self._server.account.orders.remove(order)
 
-    def __init__(self, server: SimServer):
-        self._server = server
-        self._market_data = SimMarket(server.market_data.market_code)
-
     def get_positions(self) -> List[Position]:
         return list(self._server.account.positions)
 
     def get_market_data(self, market_code) -> MarketData:
-        assert market_code == self._server.market_data.market_code
-        return self._market_data
+        try:
+            return self._market_data[market_code]
+        except KeyError as e:
+            raise MarketNotFoundError(f"Simulated Server has no historical data for market {market_code}") from e
 
     def update_market_data(self) -> None:
         for k, v in self._server.market_data.items():
-            if self._market_data.time < self._server.market_data.time:
-                src = self._server.market_data
-                self._market_data.set_prices(src.low, src.high, src.delta, time=src.time)
+            cached = self._market_data[k]
+            if cached.time < v.time:
+                cached.set_prices(v.low, v.high, v.delta, time=v.time)
 
     def open_position(
         self, amount: int, market: str, limit=None, stop=None
     ) -> Position:
-        assert market == self._server.market_data.market_code
         return self._server.account.open(amount, market, limit, stop)
 
     def close_position(self, pos: Position) -> None:

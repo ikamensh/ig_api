@@ -20,3 +20,6 @@ class InsufficientFundsException(CantOpenPosition):
 
 class PositionTooSmall(CantOpenPosition):
     pass
+
+class MarketNotFoundError(Exception):
+    pass

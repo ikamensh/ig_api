@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 
 from api.ig.ig_session import IgSession
@@ -18,6 +20,7 @@ def real_session():
 
 def sim_session():
     server = SimServer(balance=5000, history=[ig_vix_eu, ig_vix])
+    server.cur_time = datetime.now()
     s = SimSession(server)
     return s
 

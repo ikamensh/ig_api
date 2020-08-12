@@ -12,8 +12,9 @@ def test_get_orders(sess):
 def test_count_grows(sess):
     orders_before = sess.get_orders()
     target_market = markets._VIX
+    level = sess.get_market_data(target_market).ask + 1
     try:
-        order = sess.create_order(10, market=target_market)
+        order = sess.create_order(amount=10, market=target_market, level=level)
     except MarketClosedException:
         pass
     else:
@@ -39,8 +40,8 @@ def test_close_order(sess):
     orders_before = sess.get_orders()
     target_market = markets._VIX
     market_data = sess.get_market_data(target_market)
-    target_level = market_data.bid - amount  # smaller price for long, bigger price for short
-    order = sess.create_order(target_market, amount, level=target_level)
+    target_level = market_data.bid - 1  # smaller price for long, bigger price for short
+    order = sess.create_order(target_market, 10, level=target_level)
     sess.delete_order(order)
     orders_after = sess.get_orders()
     assert len(orders_before) == len(orders_after)

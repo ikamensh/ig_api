@@ -152,9 +152,11 @@ class RoboTrader:
         return self.sess.get_acc_details().profit_loss
 
     def close(self, pos: Position):
+        logger.info(f"Closing position {pos}")
         self.sess.close_position(pos)
 
     def open(self, amount, limit = None, stop = None):
+        logger.info(f"Opening position {amount=} in market {self.market.code}")
         return self.sess.open_position(amount, self.market.code, limit, stop)
 
     def debug_info(self) -> typing.Dict[str, float]:

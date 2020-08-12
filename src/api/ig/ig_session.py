@@ -9,7 +9,12 @@ from api.data_model.acc_detail import AccountDetails
 from api.data_model.market_data import MarketData
 from api.data_model.order import Order
 from api.data_model.position import Position
-from api.exceptions import LoginError, MarketClosedException, CantOpenPosition, MarketNotFoundError
+from api.exceptions import (
+    LoginError,
+    MarketClosedException,
+    CantOpenPosition,
+    MarketNotFoundError,
+)
 from api.data_model.snapshot import Snapshot
 from loguru import logger
 
@@ -17,6 +22,7 @@ _demo_url = "https://demo-api.ig.com/gateway/deal/"
 
 
 class IgSession(Session):
+
     UPDATE_FREQ = timedelta(minutes=3)
 
     def __init__(self, identifier, key, password, demo=True):
@@ -26,7 +32,53 @@ class IgSession(Session):
         self._login(identifier, password)
         self._latest_prices: Dict[str, MarketData] = {}
 
-    def create_order(self, market, amount, level, limit=None, stop=None):
+    def get_orders(self) -> List[Order]:
+        """Get all working orders as a list. """
+
+        orders_url = self._master_url + "/workingorders"
+        with self._use_version(2):
+            r = requests.get(url=orders_url, headers=self._headers)
+
+        assert r.status_code == 200, r.text
+        result = []
+        for wo_elem in r.json()["workingOrders"]:
+            data = wo_elem["workingOrderData"]
+            deal_id = data["dealId"]
+            amount = data["orderSize"]
+            amount = amount if data["direction"] == "BUY" else -amount
+            level = data["orderLevel"]
+            market_code = data["epic"]
+
+            stop_dist = data["stopDistance"]
+            limit_dist = data["limitDistance"]
+
+            result.append(
+                Order(
+                    market_code=market_code,
+                    amount=amount,
+                    level=level,
+                    stop=level - stop_dist,
+                    limit=level + limit_dist,
+                    deal_id=deal_id,
+                )
+            )
+        return result
+
+    def delete_order(self, order: Order) -> None:
+        """ Delete a working order. """
+
+        delete_order_url = self._master_url + f"/workingorders/otc/{order.deal_id}"
+
+        with self._use_version(2), self._use_method("DELETE"):
+            r = requests.post(delete_order_url)
+        assert r.status_code == 200, r.json()
+
+        deal_ref = r.json()["dealReference"]
+        reason, reply, status = self._deal_confirm(deal_ref)
+        assert status == "ACCEPTED"
+
+    def create_order(self, market, amount, level, limit=None, stop=None) -> Order:
+        """ Create a working order. """
         deal_id = self._create_order(amount, level, limit, market, stop)
         return self._deal_confirm_order(deal_id)
 
@@ -242,7 +294,7 @@ class IgSession(Session):
         with self._use_version(3):
             r = requests.get(url=markets_url + market_code, headers=self._headers)
 
-        if r.status_code == 404  and "epic.unavailable" in r.text:
+        if r.status_code == 404 and "epic.unavailable" in r.text:
             raise MarketNotFoundError(f"Market {market_code} is not found.")
 
         assert r.status_code == 200, r.text
@@ -293,8 +345,10 @@ class IgSession(Session):
         reason, reply, status = self._deal_confirm(deal_reference)
 
         if status == "REJECTED":
-            if 'MARKET_CLOSED' in reason:
-                raise MarketClosedException(f"Failed to open position, the market is closed.")
+            if "MARKET_CLOSED" in reason:
+                raise MarketClosedException(
+                    f"Failed to open position, the market is closed."
+                )
             else:
                 raise CantOpenPosition(f"Deal was rejected for reason: {reason}")
 
@@ -312,12 +366,7 @@ class IgSession(Session):
         assert status == "ACCEPTED", (status, reason)
         amount, deal_id, level, market = self._confirmation_data(reply)
 
-        return Order(
-            market,
-            amount=amount,
-            level=level,
-            deal_id=deal_id,
-        )
+        return Order(market, amount=amount, level=level, deal_id=deal_id,)
 
     def _confirmation_data(self, reply):
         deal_id = reply["dealId"]

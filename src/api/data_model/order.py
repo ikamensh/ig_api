@@ -1,4 +1,10 @@
 class Order:
+    """ Order represents request to the platform to do a trade at desired price.
+
+    Naturally, the desired price might never become available, so order has no defined completion date.
+    Note that the desired price must be better than the current price to place an order.
+    """
+
     def __init__(
         self, market_code: str, amount: int, level, limit=None, stop=None, deal_id=None
     ):

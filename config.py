@@ -19,7 +19,9 @@ import requests
 def wrap_request(foo):
     def _(*args, **kwargs):
         logger.opt(depth=1).debug(f"Calling requests.{foo.__name__} with {args=} and {kwargs=}")
-        return foo(*args, **kwargs)
+        result: requests.Response = foo(*args, **kwargs)
+        logger.opt(depth=1).debug(f"Response: {result.status_code=} {result.json()=}")
+        return result
 
     return _
 

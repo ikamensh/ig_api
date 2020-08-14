@@ -6,7 +6,7 @@ import pytest
 
 import markets
 
-from api.sim._sim_market_data import SimMarket
+from trading_api.sim._sim_market_data import SimMarket
 
 
 class TestMarketData(SimMarket):

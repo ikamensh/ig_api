@@ -1,6 +1,6 @@
 import random
 
-from api.exceptions import InvalidBoundingPriceException, InsufficientFundsException
+from trading_api.exceptions import InvalidBoundingPriceException, InsufficientFundsException
 from src.robotrader.robotrader import RoboTrader
 
 

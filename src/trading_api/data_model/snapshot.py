@@ -1,6 +1,21 @@
+from enum import auto, Enum
+
+class MarketStatus(Enum):
+    OPEN = auto()
+    EDITS = auto()
+
+    @staticmethod
+    def from_str(s):
+        if s == "EDITS_ONLY":
+            return MarketStatus.EDITS
+        elif s == "TRADEABLE":
+            return MarketStatus.OPEN
+        else:
+            raise Exception("unknown market status")
+
 class Snapshot:
     def __init__(self, json_elem):
-        self.status = json_elem["marketStatus"]
+        self.status = MarketStatus.from_str(json_elem["marketStatus"])
         self.net_change = json_elem["netChange"]
         self.percentage_change = json_elem["percentageChange"]
         self.update_time = json_elem["updateTime"]

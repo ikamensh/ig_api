@@ -2,8 +2,8 @@ from datetime import datetime
 
 import pytest
 
-from api.ig.ig_session import IgSession
-from api.sim.sim_session import SimServer, SimSession
+from trading_api.ig.ig_session import IgSession
+from trading_api.sim.sim_session import SimServer, SimSession
 from datasets.historical import ig_vix_eu, ig_vix
 
 demo_account_id = "ikamen_demo"
@@ -20,7 +20,7 @@ def real_session():
 
 def sim_session():
     server = SimServer(balance=5000, history=[ig_vix_eu, ig_vix])
-    server.cur_time = datetime.now()
+    server._cur_time = datetime.now()
     s = SimSession(server)
     return s
 

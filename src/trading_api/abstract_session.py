@@ -2,10 +2,10 @@ from abc import ABC
 from datetime import datetime
 from typing import List, Generator, Tuple
 
-from api.data_model.acc_detail import AccountDetails
-from api.data_model.market_data import MarketData
-from api.data_model.order import Order
-from api.data_model.position import Position
+from trading_api.data_model.acc_detail import AccountDetails
+from trading_api.data_model.market_data import MarketData
+from trading_api.data_model.order import Order
+from trading_api.data_model.position import Position
 
 
 class Session(ABC):

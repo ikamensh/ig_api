@@ -4,9 +4,9 @@ from unittest.mock import Mock, create_autospec
 import loguru
 
 import markets
-from api.data_model.acc_detail import AccountDetails
-from api.data_model.market_data import MarketData
-from api.abstract_session import Session
+from trading_api.data_model.acc_detail import AccountDetails
+from trading_api.data_model.market_data import MarketData
+from trading_api.abstract_session import Session
 from launchers import startup
 
 

@@ -1,7 +1,7 @@
 import collections
 import typing
 
-from api.data_model.market_data import MarketData
+from trading_api.data_model.market_data import MarketData
 
 
 class Feature:

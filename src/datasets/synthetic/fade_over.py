@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import random
 
 from datasets.market_history import MarketHistory
-from datasets.random_slice import random_slice
+from datasets.synthetic.random_slice import random_slice
 
 
 def fade_over(seq: typing.List[MarketHistory], overlap = 0.15) -> MarketHistory:

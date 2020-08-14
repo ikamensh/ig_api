@@ -1,6 +1,6 @@
 import random
 
-from datasets.random_slice import random_slice
+from datasets.synthetic.random_slice import random_slice
 from robotrader.traders.potential_trader import PotentialTrader
 from launchers.simulate import simulate
 

@@ -4,7 +4,7 @@ from typing import Dict
 from bokeh.colors.util import NamedColor
 from bokeh.plotting import figure, show
 
-from api.sim._sim_market_data import SimMarket
+from trading_api.sim._sim_market_data import SimMarket
 from datasets.market_history import MarketHistory
 from robotrader.features.features import Feature, price
 

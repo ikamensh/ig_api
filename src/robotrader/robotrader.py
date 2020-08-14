@@ -2,11 +2,11 @@ import typing
 import markets
 from loguru import logger
 
-from api.abstract_session import Session
-from api.data_model.position import Position
+from trading_api.abstract_session import Session
+from trading_api.data_model.position import Position
 from datasets.market_history import MarketHistory
-from api.exceptions import CantOpenPosition
-from api.sim._sim_market_data import SimMarket
+from trading_api.exceptions import CantOpenPosition
+from trading_api.sim._sim_market_data import SimMarket
 
 if typing.TYPE_CHECKING:
     from robotrader.features.features import Feature
@@ -67,11 +67,15 @@ class RoboTrader:
         self.bounds.set_high(markets.vix.code, VIX_HIGH_PRICE)
 
     def step(self):
-        """Activate robotrader: update features, decide and execute actions. """
+        """Activate robotrader: update features, decide and execute actions.
+
+        Currently all features target only a single market."""
+
         self.sess.update_market_data()
         logger.debug(f"{self.__class__.__name__} is updating features.")
+        data = self.sess.get_market_data(self.market)
+
         for k, f in self.features.items():
-            data = self.sess.get_market_data(self.market)
             f.update(data)
             logger.debug(f"{k: <15} = {f.value:.3f}")
         try:

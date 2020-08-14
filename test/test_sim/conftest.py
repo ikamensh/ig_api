@@ -2,8 +2,8 @@ import datetime
 
 import pytest
 
-from api.sim._sim_account import SimAccount
-from api.sim.sim_session import SimServer
+from trading_api.sim._sim_account import SimAccount
+from trading_api.sim.sim_session import SimServer
 from datasets.historical import ig_vix_eu, ig_vix
 
 

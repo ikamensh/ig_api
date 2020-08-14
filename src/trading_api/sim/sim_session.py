@@ -1,15 +1,15 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Generator, Tuple, List
 
-from api.abstract_session import Session
-from api.data_model.acc_detail import AccountDetails
-from api.data_model.order import Order
-from api.exceptions import MarketNotFoundError, OrderNotFoundError
+from trading_api.abstract_session import Session
+from trading_api.data_model.acc_detail import AccountDetails
+from trading_api.data_model.order import Order
+from trading_api.exceptions import MarketNotFoundError, OrderNotFoundError
 from datasets.market_history import MarketHistory
-from api.data_model.market_data import MarketData
-from api.data_model.position import Position
-from api.sim._sim_account import SimAccount
-from api.sim._sim_market_data import SimMarket
+from trading_api.data_model.market_data import MarketData
+from trading_api.data_model.position import Position
+from trading_api.sim._sim_account import SimAccount
+from trading_api.sim._sim_market_data import SimMarket
 
 
 class SimServer:
@@ -24,29 +24,28 @@ class SimServer:
         self.market_history = {h.market.code: h for h in history}
         self.market_data = {h.market.code: SimMarket(h.market.code) for h in history}
 
-
-        # self.steps_iter = iter(history.keys())
-        self.cur_time = common_window[0]
+        self._cur_time = common_window[0]
         self._set_prices()
-        self.account = SimAccount(self.market_data, balance, self.cur_time)
+        self.account = SimAccount(self.market_data, balance, self._cur_time)
 
     def price_history(
         self, market: str, resolution: str, start: datetime, end: datetime
     ):
 
-        end = min(self.cur_time, end)
+        end = min(self._cur_time, end)
         # assert resolution == self.history.steps_per_day TODO
         for k, v in self.market_history[market].slice(start, end).items():
-            yield (k.isoformat(), *v)
+            yield (k, *v)
 
     def _set_prices(self):
         for k, v in self.market_data.items():
-            low, high, delta = self.market_history[k][self.cur_time]
+            low, high, delta = self.market_history[k][self._cur_time]
             v.set_prices(low, high, delta)
 
-    def step(self):
+    def step(self, seconds):
+        self._cur_time += timedelta(seconds=seconds)
         self._set_prices()
-        self.account.step(self.cur_time)
+        self.account.step(self._cur_time)
 
 
 class SimSession(Session):

@@ -1,6 +1,7 @@
 from datetime import datetime
+import typing
 
-from api.data_model.snapshot import Snapshot
+from trading_api.data_model.snapshot import Snapshot, MarketStatus
 
 
 class MarketData:
@@ -28,6 +29,7 @@ class MarketData:
         self.low = low
 
         self.time = time
+        self.status = MarketStatus.EDITS
 
     @staticmethod
     def from_snapshot(
@@ -42,7 +44,7 @@ class MarketData:
             margin_req=margin_req,
             time=datetime.now(),
         )
-
+        result.status = snap.status
         return result
 
     def update(self, snap: Snapshot):

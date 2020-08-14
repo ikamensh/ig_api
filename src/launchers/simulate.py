@@ -8,10 +8,10 @@ from bokeh.plotting import figure, show
 from loguru import logger
 
 import markets
-from api.sim.sim_session import SimSession, SimServer
-from datasets.fade_over import fadeover_4_years
+from trading_api.sim.sim_session import SimSession, SimServer
+from datasets.synthetic.fade_over import fadeover_4_years
 from datasets.market_history import MarketHistory
-from datasets.random_slice import random_slice
+from datasets.synthetic.random_slice import random_slice
 from robotrader.features.features import price
 from robotrader.robotrader import RoboTrader
 from robotrader.traders.exp_avg import ExpAvgTrader
@@ -38,8 +38,9 @@ def _visualize(features):
     deb_fig = plot_group("debug")
     pos_fig = plot_group("position")
     pos_d_fig = plot_group("pos_change")
+    nw_fig = plot_group("net_worth")
 
-    show(column(price_fig, deb_fig, dev_fig, mom_fig, pos_fig, pos_d_fig))
+    show(column(price_fig, nw_fig, pos_fig, deb_fig, dev_fig, mom_fig, pos_d_fig))
 
 
 def _get_position(s: SimServer) -> int:
@@ -48,6 +49,10 @@ def _get_position(s: SimServer) -> int:
     if s.account.assets():
         result += s.account.assets()[markets.vix.code]
     return result
+
+def _get_net_worth(s: SimServer) -> float:
+    return s.account.balance + s.account.profit()
+
 
 def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualize=False, **kwargs) -> float:
     """Run a single simulation of how a trading bot would perform on given dataset.
@@ -73,19 +78,19 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualiz
     rt.warm_up(history)
 
     values = collections.defaultdict(list)
-    while server.cur_time < dataset.end:
+    timestep = timedelta(days=1).total_seconds()
+    while server._cur_time < dataset.end:
         rt.step()
-        server.step()
         logger.info(
-            f"At {server.cur_time} - "
-            # f"Price {server.market_data.bid:.2f} / {server.market_data.ask:.2f}, "
+            f"At {server._cur_time} - "
             f"Account: "
             f"{server.account.balance + server.account.profit():.2f} {len(server.account.positions)}",
         )
-        server.cur_time += timedelta(hours=2)
+        server.step(timestep)
 
         if visualize:
             values["price"].append(price(rt.market_data()))
+            values["net_worth"].append(_get_net_worth(server))
             pos_list = values["position"]
             pos_list.append( _get_position(server) )
             if len(pos_list) > 1:

@@ -1,5 +1,5 @@
-from api.data_model.market_data import MarketData
-from api.exceptions import InvalidBoundingPriceException
+from trading_api.data_model.market_data import MarketData
+from trading_api.exceptions import InvalidBoundingPriceException
 
 INTEREST_LONG = 1 / 1500
 INTEREST_SHORT = 1 / 4000

@@ -3,14 +3,14 @@ import typing
 from contextlib import contextmanager
 from datetime import datetime
 
-from api.data_model.order import Order
-from api.exceptions import InsufficientFundsException
+from trading_api.data_model.order import Order
+from trading_api.exceptions import InsufficientFundsException
 
 from loguru import logger
 
-from api.data_model.position import Position
+from trading_api.data_model.position import Position
 import markets
-from api.sim._sim_market_data import SimMarket
+from trading_api.sim._sim_market_data import SimMarket
 
 
 @contextmanager

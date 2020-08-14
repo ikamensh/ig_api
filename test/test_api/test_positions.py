@@ -1,7 +1,7 @@
 import pytest
 
 import markets
-from api.exceptions import MarketClosedException
+from trading_api.exceptions import MarketClosedException
 
 
 def test_get_positions(sess):

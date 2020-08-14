@@ -6,7 +6,7 @@ from bokeh.colors.util import NamedColor
 from bokeh.plotting import figure, show
 
 from datasets.market_history import MarketHistory
-from api.sim._sim_market_data import SimMarket
+from trading_api.sim._sim_market_data import SimMarket
 from robotrader.features.features import Feature, price, ExpAvg, Momentum
 from datasets.visualize.cboe_vs_ig import match
 

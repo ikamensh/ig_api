@@ -1,8 +1,14 @@
 import pytest
 
 import markets
-from datasets.market_history import MarketHistory
+from datasets.market_history import MarketHistory, Resolutions
 import datetime
+
+
+@pytest.fixture()
+def vix_data():
+    md = MarketHistory.from_csv(markets.vix, Resolutions.HOUR_2)
+    yield md
 
 def test_slice():
     md = MarketHistory(markets.vix)
@@ -15,22 +21,20 @@ def test_slice():
     assert len(s) > 0
     assert len(md) > len(s)
 
-def test_interpolates():
-    md = MarketHistory.from_csv(markets.vix)
-    date = md.start + (md.end - md.start) / 2
-    assert isinstance(md[date], tuple)
+def test_interpolates(vix_data):
+
+    date = vix_data.start + (vix_data.end - vix_data.start) / 2
+    assert isinstance(vix_data[date], tuple)
 
 
-def test_unknown():
-    md = MarketHistory.from_csv(markets.vix)
-    date = md.start - datetime.timedelta(days=1)
+def test_unknown(vix_data):
+    date = vix_data.start - datetime.timedelta(days=1)
     with pytest.raises(KeyError):
-        val = md[date]
+        val = vix_data[date]
 
-def test_future():
-    md = MarketHistory.from_csv(markets.vix)
-    date = md.end + datetime.timedelta(days=1)
-    assert md[date] == md[md.end]
+def test_future(vix_data):
+    date = vix_data.end + datetime.timedelta(days=1)
+    assert vix_data[date] == vix_data[vix_data.end]
 
 
 

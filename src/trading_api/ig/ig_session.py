@@ -1,21 +1,22 @@
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 import requests
 import contextlib
 from typing import List, Generator, Tuple, Dict
 
-from api.abstract_session import Session
-from api.data_model.acc_detail import AccountDetails
-from api.data_model.market_data import MarketData
-from api.data_model.order import Order
-from api.data_model.position import Position
-from api.exceptions import (
+from trading_api.abstract_session import Session
+from trading_api.data_model.acc_detail import AccountDetails
+from trading_api.data_model.market_data import MarketData
+from trading_api.data_model.order import Order
+from trading_api.data_model.position import Position
+from trading_api.exceptions import (
     LoginError,
     MarketClosedException,
     CantOpenPosition,
     MarketNotFoundError, OrderNotFoundError,
 )
-from api.data_model.snapshot import Snapshot
+from trading_api.data_model.snapshot import Snapshot
 from loguru import logger
 
 _demo_url = "https://demo-api.ig.com/gateway/deal/"
@@ -206,8 +207,8 @@ class IgSession(Session):
         return matches[0]
 
     def price_history(
-        self, market: str, resolution: str, start: datetime, end: datetime,
-    ) -> Generator[Tuple[str, float, float, float], None, None]:
+        self, market: str, resolution: str, start: datetime = None, end: datetime = None, n_points: int = None
+    ) -> Generator[Tuple[datetime, float, float, float], None, None]:
         """ Allows iteration over historical price data.
 
         Resolution must be taken from a list of supported values in Resolutions class.
@@ -215,17 +216,23 @@ class IgSession(Session):
         Format: iterator yields tuples (timestamp: str, low, high, spread)
         """
         prices_url = self._master_url + "prices/"
+        payload = {"resolution": resolution, "pageSize": 500}
 
-        start = start.isoformat()
-        end = end.isoformat()
+        if n_points:
+            assert start is None
+            assert end is None
+            payload.update({"max": n_points})
 
-        payload = {"resolution": resolution, "from": start, "to": end, "pageSize": 500}
+        else:
+            start = start.isoformat()
+            end = end.isoformat()
+            payload.update({"from": start, "to": end})
+
         with self._use_version(3):
             r = requests.get(
                 url=prices_url + market, headers=self._headers, params=payload
             )
-            if r.status_code != 200:
-                raise Exception(f"API error: {r.text}")
+            assert r.status_code == 200, (r.status_code, r.text)
 
             n_pages = r.json()["metadata"]["pageData"]["totalPages"]
             init_allowance = r.json()["metadata"]["allowance"]["remainingAllowance"]
@@ -235,8 +242,7 @@ class IgSession(Session):
                 r = requests.get(
                     url=prices_url + market, headers=self._headers, params=payload
                 )
-                if r.status_code != 200:
-                    raise Exception(f"API error: {r.text}")
+                assert r.status_code == 200, (r.status_code, r.text)
 
                 reply = r.json()
                 if "prices" in reply:
@@ -252,13 +258,13 @@ class IgSession(Session):
                         if None in prices:
                             continue
 
-                        prices = [float(x) for x in prices]
+                        prices = [Decimal(str(x)) for x in prices]
                         lb, la, hb, ha = prices
                         delta = ha - hb
                         low = (lb + la) / 2
                         high = (hb + ha) / 2
 
-                        yield timestamp, low, high, delta
+                        yield datetime.fromisoformat(timestamp), low, high, delta
 
             else:
                 rem_allowance = r.json()["metadata"]["allowance"]["remainingAllowance"]

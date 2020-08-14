@@ -1,6 +1,6 @@
 import pytest
 
-from api.sim.sim_session import SimSession
+from trading_api.sim.sim_session import SimSession
 
 import markets
 

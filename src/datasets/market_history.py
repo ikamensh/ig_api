@@ -8,15 +8,23 @@ from typing import Dict, Iterator, Tuple
 from loguru import logger
 
 import markets
-from api.ig.ig_session import IgSession
+from trading_api.ig.ig_session import IgSession
 from config import data_folder
 
 
 class Resolutions:
+    SECOND = "SECOND"
+
     MINUTE_30 = "MINUTE_30"
+    MINUTE_5 = "MINUTE_5"
+    MINUTE = "MINUTE"
+
+    HOUR = "HOUR"
     HOUR_2 = "HOUR_2"
 
-    __all__ = [MINUTE_30, HOUR_2]
+    DAY = "DAY"
+
+    __all__ = [SECOND, MINUTE, MINUTE_5, MINUTE_30, HOUR, HOUR_2, DAY]
 
 
 _synth_market_id = markets.MarketId(code=None, name="synthetic_data")
@@ -31,14 +39,18 @@ class MarketHistory:
         3) slicing data based on datetime
     """
 
-    def __init__(self, market: markets.MarketId = _synth_market_id):
-        self.csv_path = os.path.join(data_folder, f"{market.name}.csv")
+    def __init__(self, market: markets.MarketId = _synth_market_id, resolution = Resolutions.HOUR_2):
+
+        assert resolution in Resolutions.__all__
+
+        self.csv_path = os.path.join(data_folder, resolution, f"{market.name}.csv")
         self.market = market
         self._data: Dict[datetime, Tuple[float, float, float]] = {}
-        self._start = None
-        self._end = None
+        self._start = datetime.min
+        self._end = datetime.min
         self._keys = None
         self.steps_per_day = None
+        self.resolution = resolution
         self._dirty_bit = False
 
     def compute_start_end_step(self):
@@ -66,12 +78,12 @@ class MarketHistory:
         self._data[date_time] = low, high, delta
 
     @staticmethod
-    def from_csv(market: markets.MarketId):
+    def from_csv(market: markets.MarketId, resolution: str):
         """ Create an MarketHistory based on the data saved in a .csv file.
 
         Symmetrical with `to_csv` method. """
 
-        result = MarketHistory(market)
+        result = MarketHistory(market, resolution)
 
         if not os.path.exists(result.csv_path):
             logger.warning(
@@ -104,18 +116,17 @@ class MarketHistory:
                 low, high, delta = [f"{x:.2f}" for x in [low, high, delta]]
                 writer.writerow((k, low, high, delta))
 
-    def update(self, sess: IgSession, resolution):
+    def update(self, sess: IgSession, start = None, end = None):
         """ Use session to update data to the latest available on the platform. """
 
-        assert (
-            resolution in Resolutions.__all__
-        ), f"Unsupported resolution {resolution}."
+        start = start or self.end
+        end = end or datetime.now()
 
         if datetime.now() - self.end > timedelta(minutes=15):
-            for t, (low, high, delta) in sess.price_history(
-                self.market.code, resolution, start=self.end, end=datetime.now()
+            for t, low, high, delta in sess.price_history(
+                self.market.code, self.resolution, start=start, end=end
             ):
-                self._data[datetime.fromisoformat(t)] = low, high, delta
+                self._data[t] = low, high, delta
             self.compute_start_end_step()
 
     def slice(self, start: datetime = None, end: datetime = None) -> "MarketHistory":

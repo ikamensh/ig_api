@@ -4,7 +4,7 @@ from typing import Generator, Tuple, List
 from api.abstract_session import Session
 from api.data_model.acc_detail import AccountDetails
 from api.data_model.order import Order
-from api.exceptions import MarketNotFoundError
+from api.exceptions import MarketNotFoundError, OrderNotFoundError
 from datasets.market_history import MarketHistory
 from api.data_model.market_data import MarketData
 from api.data_model.position import Position
@@ -63,7 +63,10 @@ class SimSession(Session):
         return self._server.account.create_order(market, amount, level, limit, stop)
 
     def delete_order(self, order: Order) -> None:
-        self._server.account.orders.remove(order)
+        try:
+            self._server.account.orders.remove(order)
+        except ValueError as e:
+            raise OrderNotFoundError(f"Order is not found on the server: {order}") from e
 
     def get_positions(self) -> List[Position]:
         return list(self._server.account.positions)
@@ -81,7 +84,7 @@ class SimSession(Session):
                 cached.set_prices(v.low, v.high, v.delta, time=v.time)
 
     def open_position(
-        self, amount: int, market: str, limit=None, stop=None
+        self, market: str, amount: int, limit=None, stop=None
     ) -> Position:
         return self._server.account.open(amount, market, limit, stop)
 

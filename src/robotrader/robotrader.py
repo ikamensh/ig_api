@@ -45,7 +45,7 @@ class RoboTrader:
     """Abstract class for trading bot."""
 
     def __init__(
-        self, sess: Session, target_market: markets.MarketId, steps_per_day: int = None
+        self, sess: Session, target_market: str, steps_per_day: int = None
     ):
         """
         Args:
@@ -54,6 +54,8 @@ class RoboTrader:
             steps_per_day:
                 how many time per actual day will step function be called. Used to calibrate features.
         """
+        assert isinstance(target_market, str)
+
         self.sess = sess
         self.market = target_market
         self.steps_per_day = steps_per_day
@@ -69,7 +71,7 @@ class RoboTrader:
         self.sess.update_market_data()
         logger.debug(f"{self.__class__.__name__} is updating features.")
         for k, f in self.features.items():
-            data = self.sess.get_market_data(self.market.code)
+            data = self.sess.get_market_data(self.market)
             f.update(data)
             logger.debug(f"{k: <15} = {f.value:.3f}")
         try:
@@ -121,18 +123,18 @@ class RoboTrader:
 
     def max_long_amount(self):
 
-        data = self.sess.get_market_data(self.market.code)
-        risk_per_unit = max(1, data.ask - self.bounds.low(self.market.code))
+        data = self.sess.get_market_data(self.market)
+        risk_per_unit = max(1, data.ask - self.bounds.low(self.market))
         return self._free_money() / risk_per_unit
 
     def max_short_amount(self):
 
-        data = self.sess.get_market_data(self.market.code)
-        risk_per_unit = max(1, self.bounds.high(self.market.code) - data.bid)
+        data = self.sess.get_market_data(self.market)
+        risk_per_unit = max(1, self.bounds.high(self.market) - data.bid)
         return self._free_money() / risk_per_unit
 
     def market_data(self, market_code = None):
-        market_code = market_code or self.market.code
+        market_code = market_code or self.market
         return self.sess.get_market_data(market_code)
 
     @property
@@ -156,8 +158,8 @@ class RoboTrader:
         self.sess.close_position(pos)
 
     def open(self, amount, limit = None, stop = None):
-        logger.info(f"Opening position {amount=} in market {self.market.code}")
-        return self.sess.open_position(amount, self.market.code, limit, stop)
+        logger.info(f"Opening position {amount=} in market {self.market}")
+        return self.sess.open_position(self.market, amount, limit, stop)
 
     def debug_info(self) -> typing.Dict[str, float]:
         return {}

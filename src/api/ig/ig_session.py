@@ -13,7 +13,7 @@ from api.exceptions import (
     LoginError,
     MarketClosedException,
     CantOpenPosition,
-    MarketNotFoundError,
+    MarketNotFoundError, OrderNotFoundError,
 )
 from api.data_model.snapshot import Snapshot
 from loguru import logger
@@ -35,7 +35,7 @@ class IgSession(Session):
     def get_orders(self) -> List[Order]:
         """Get all working orders as a list. """
 
-        orders_url = self._master_url + "/workingorders"
+        orders_url = self._master_url + "workingorders"
         with self._use_version(2):
             r = requests.get(url=orders_url, headers=self._headers)
 
@@ -57,8 +57,8 @@ class IgSession(Session):
                     market_code=market_code,
                     amount=amount,
                     level=level,
-                    stop=level - stop_dist,
-                    limit=level + limit_dist,
+                    stop=level - stop_dist if stop_dist else None,
+                    limit=level + limit_dist if limit_dist else None,
                     deal_id=deal_id,
                 )
             )
@@ -67,15 +67,19 @@ class IgSession(Session):
     def delete_order(self, order: Order) -> None:
         """ Delete a working order. """
 
-        delete_order_url = self._master_url + f"/workingorders/otc/{order.deal_id}"
+        delete_order_url = self._master_url + f"workingorders/otc/{order.deal_id}"
+
 
         with self._use_version(2), self._use_method("DELETE"):
-            r = requests.post(delete_order_url)
+            r = requests.delete(url=delete_order_url, json={}, headers=self._headers)
+
+        if 'errorCode' in r.json() and  r.json()['errorCode'] == 'error.service.delete.working.order.not.found':
+            raise OrderNotFoundError(f"Order is not found on the server: {order}")
         assert r.status_code == 200, r.json()
 
-        deal_ref = r.json()["dealReference"]
-        reason, reply, status = self._deal_confirm(deal_ref)
-        assert status == "ACCEPTED"
+        # deal_ref = r.json()["dealReference"]
+        # reason, reply, status = self._deal_confirm(deal_ref)
+        # assert status == "ACCEPTED"
 
     def create_order(self, market, amount, level, limit=None, stop=None) -> Order:
         """ Create a working order. """
@@ -86,7 +90,7 @@ class IgSession(Session):
         create_order_url = self._master_url + "workingorders/otc"
         body = {
             "epic": market,
-            "expiry": "DFB",
+            "expiry": "-",  # must match expiry field of market data
             "size": abs(amount),
             "level": level,
             "type": "LIMIT",
@@ -150,7 +154,7 @@ class IgSession(Session):
                 md.update(snap)
                 logger.debug(f"Updating market data: {md}.")
 
-    def open_position(self, amount: int, market: str) -> Position:
+    def open_position(self, market: str, amount: int) -> Position:
         # TODO support limit & stop
 
         # TODO handle insufficient funds
@@ -162,7 +166,7 @@ class IgSession(Session):
 
         body = {
             "dealId": pos.deal_id,
-            "epic": None,
+            "epic": pos.market_code,
             "expiry": None,
             "level": None,
             "orderType": "MARKET",
@@ -179,7 +183,7 @@ class IgSession(Session):
         with self._use_method("DELETE"), self._use_version(1):
             r = requests.post(url=otc_url, headers=self._headers, json=body)
 
-        assert r.status_code == 200, r.text
+        assert r.status_code == 200, (r.status_code, r.text)
 
     def get_acc_details(self) -> AccountDetails:
         acc_url = self._master_url + "accounts/"
@@ -378,7 +382,7 @@ class IgSession(Session):
         return amount, deal_id, level, market
 
     def _deal_confirm(self, deal_reference):
-        trade_confirm_url = self._master_url + "confirms/"
+        trade_confirm_url = self._master_url + "confirms"
         r = requests.get(
             url=f"{trade_confirm_url}/{deal_reference}", headers=self._headers
         )

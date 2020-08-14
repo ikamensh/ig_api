@@ -16,7 +16,7 @@ class Order:
         self.deal_id = deal_id
 
     def __repr__(self):
-        result = f"Position {self.deal_id} in {self.market_code} | {self.amount:.2f} @ {self.level:.2f}"
+        result = f"Order {self.deal_id} in {self.market_code} | {self.amount:.2f} @ {self.level:.2f}"
         if self.limit:
             result += f" limit: {self.limit}"
         if self.stop:

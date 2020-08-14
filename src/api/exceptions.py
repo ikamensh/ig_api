@@ -23,3 +23,7 @@ class PositionTooSmall(CantOpenPosition):
 
 class MarketNotFoundError(Exception):
     pass
+
+
+class OrderNotFoundError(Exception):
+    pass

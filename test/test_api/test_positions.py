@@ -40,7 +40,7 @@ def test_close_position(sess):
     positions_before = sess.get_positions()
     target_market = markets._VIX
     try:
-        pos = sess.open_position(10, market=target_market)
+        pos = sess.open_position(amount=10, market=target_market)
     except MarketClosedException:
         pass
     else:

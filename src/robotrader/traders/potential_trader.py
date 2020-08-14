@@ -30,11 +30,11 @@ class PotentialTrader(RoboTrader, ABC):
         raise NotImplementedError
 
     def max_long_amount(self):
-        risk_per_unit = self.market_data().ask - self.bounds.low(self.market.code)
+        risk_per_unit = self.market_data().ask - self.bounds.low(self.market)
         return self._limit(risk_per_unit)
 
     def max_short_amount(self):
-        risk_per_unit = self.bounds.high(self.market.code) - self.market_data().bid
+        risk_per_unit = self.bounds.high(self.market) - self.market_data().bid
         return self._limit(risk_per_unit)
 
     def _limit(self, risk_per_unit):

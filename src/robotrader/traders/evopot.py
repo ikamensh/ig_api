@@ -47,8 +47,8 @@ class EvoPotTrader(PotentialTrader):
             random(), random()
         ]
 
-    def __init__(self, account, market_data, steps_per_day, *, params=None):
-        super().__init__(account, market_data, steps_per_day)
+    def __init__(self, account, market_code, steps_per_day, *, params=None):
+        super().__init__(account, market_code, steps_per_day)
 
         (
             window1, b_dev_s, self.dev_s_pot, self.dev_s_risk,

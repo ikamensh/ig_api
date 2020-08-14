@@ -1,7 +1,8 @@
 import pytest
 
 import markets
-from api.exceptions import MarketClosedException
+from api.data_model.order import Order
+from api.exceptions import MarketClosedException, OrderNotFoundError
 
 
 def test_get_orders(sess):
@@ -12,7 +13,7 @@ def test_get_orders(sess):
 def test_count_grows(sess):
     orders_before = sess.get_orders()
     target_market = markets._VIX
-    level = sess.get_market_data(target_market).ask + 1
+    level = sess.get_market_data(target_market).ask - 1
     try:
         order = sess.create_order(amount=10, market=target_market, level=level)
     except MarketClosedException:
@@ -46,12 +47,24 @@ def test_close_order(sess):
     orders_after = sess.get_orders()
     assert len(orders_before) == len(orders_after)
 
+
+def test_close_nonexistent(sess):
+
+    target_market = markets._VIX
+    order = Order(amount=10, level=150, market_code=target_market, deal_id="FAKE")
+    with pytest.raises(OrderNotFoundError):
+        sess.delete_order(order)
+
+
+
+
 def test_close_all(sess):
 
     orders = sess.get_orders()
     for o in orders:
         sess.delete_order(o)
-
+    import time
+    time.sleep(0.3)
     orders_after = sess.get_orders()
 
     assert not orders_after

@@ -27,7 +27,7 @@ class Feature:
     def _update_once(self, platform: "MarketData"):
         pass
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> float:
         return self.value
 
 

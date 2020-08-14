@@ -1,4 +1,5 @@
 import collections
+from datetime import timedelta
 from typing import ClassVar
 
 from bokeh.colors.util import NamedColor
@@ -6,6 +7,7 @@ from bokeh.layouts import column
 from bokeh.plotting import figure, show
 from loguru import logger
 
+import markets
 from api.sim.sim_session import SimSession, SimServer
 from datasets.fade_over import fadeover_4_years
 from datasets.market_history import MarketHistory
@@ -44,7 +46,7 @@ def _get_position(s: SimServer) -> int:
     """Find the total amount of .vix position held. """
     result = 0
     if s.account.assets():
-        result += s.account.assets()[s.market_data.market_code]
+        result += s.account.assets()[markets.vix.code]
     return result
 
 def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualize=False, **kwargs) -> float:
@@ -56,6 +58,7 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualiz
 
     START_BALANCE = 5000
     dataset = dataset or fadeover_4_years()
+    dataset.market = markets.vix
 
     keys = list(dataset.keys())
     start_date = keys[len(keys) // 3]
@@ -63,10 +66,10 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualiz
     future = dataset.slice(start=start_date)
     print(len(history), len(future))
 
-    server = SimServer(balance=START_BALANCE, history=future)
+    server = SimServer(balance=START_BALANCE, history=[future])
     sess = SimSession(server)
 
-    rt: RoboTrader = rt_cls(sess, dataset.market, dataset.steps_per_day, **kwargs)
+    rt: RoboTrader = rt_cls(sess, dataset.market.code, dataset.steps_per_day, **kwargs)
     rt.warm_up(history)
 
     values = collections.defaultdict(list)
@@ -74,9 +77,12 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualiz
         rt.step()
         server.step()
         logger.info(
-            f"At {server.cur_time} - Price {server.market_data.bid:.2f} / {server.market_data.ask:.2f}, Account: "
+            f"At {server.cur_time} - "
+            # f"Price {server.market_data.bid:.2f} / {server.market_data.ask:.2f}, "
+            f"Account: "
             f"{server.account.balance + server.account.profit():.2f} {len(server.account.positions)}",
         )
+        server.cur_time += timedelta(hours=2)
 
         if visualize:
             values["price"].append(price(rt.market_data()))

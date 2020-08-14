@@ -8,7 +8,7 @@ def test_cycle_costs(server):
     s = SimSession(server)
     balance = s.get_acc_details().balance
 
-    pos  = s.open_position(10, markets.vix.code)
+    pos  = s.open_position(markets.vix.code, 10)
     s.close_position(pos)
 
     assert balance > s.get_acc_details().balance

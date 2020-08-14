@@ -166,7 +166,7 @@ class IgSession(Session):
 
         body = {
             "dealId": pos.deal_id,
-            "epic": pos.market_code,
+            "epic": None,
             "expiry": None,
             "level": None,
             "orderType": "MARKET",

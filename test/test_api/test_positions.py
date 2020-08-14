@@ -13,7 +13,7 @@ def test_count_grows(sess):
     positions_before = sess.get_positions()
     target_market = markets._VIX
     try:
-        pos = sess.open_position(10, market=target_market)
+        pos = sess.open_position(market=target_market, amount=10)
     except MarketClosedException:
         pass
     else:
@@ -27,7 +27,7 @@ def test_open_position(sess, amount):
 
     target_market = markets._VIX
     try:
-        pos = sess.open_position(amount, market=target_market)
+        pos = sess.open_position(target_market, amount)
     except MarketClosedException:
         pass
     else:

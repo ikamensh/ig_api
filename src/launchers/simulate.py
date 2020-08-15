@@ -69,7 +69,6 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualiz
     start_date = keys[len(keys) // 3]
     history = dataset.slice(end=start_date)
     future = dataset.slice(start=start_date)
-    print(len(history), len(future))
 
     server = SimServer(balance=START_BALANCE, history=[future])
     sess = SimSession(server)

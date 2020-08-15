@@ -5,16 +5,16 @@ Visualize comparison of official CBOE price data for .vix vs IG.com price data.
 from typing import Tuple, List
 
 import markets
-from datasets.market_history import MarketHistory
+from datasets.market_history import MarketHistory, Resolutions
 from datasets.historical import add_averaging
 
 
 def plot():
-    ig_history = MarketHistory.from_csv(markets.vix)
-    cboe_history = MarketHistory.from_csv(markets.cboe_vix)
+    ig_history = MarketHistory.from_csv(markets.vix, Resolutions.HOUR_2)
+    cboe_history = MarketHistory.from_csv(markets.cboe_vix, Resolutions.DAY)
     cboe_history = cboe_history.slice(start=ig_history.start, end=ig_history.end)
 
-    cboe_adapted = MarketHistory.from_csv(markets.cboe_vix)
+    cboe_adapted = MarketHistory.from_csv(markets.cboe_vix, Resolutions.DAY)
     add_averaging(cboe_adapted)
     cboe_adapted = cboe_adapted.slice(start=ig_history.start, end=ig_history.end)
 

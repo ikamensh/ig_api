@@ -24,7 +24,7 @@ class MarketData:
         self.bid = bid
         self.ask = ask
 
-        self.delta = ask - bid
+        self.delta = ask - bid  # spread
         self.high = high
         self.low = low
 

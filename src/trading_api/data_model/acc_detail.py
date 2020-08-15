@@ -5,7 +5,7 @@ class AccountDetails:
     def __init__(self, balance, profit_loss, available, name, id, currency):
         self.balance = balance
         self.profit_loss = profit_loss
-        self.available = available
+        self.available = available  # 1000$ gold -> 5% -> 50$
         self.name = name
         self.id = id
         self.currency = currency

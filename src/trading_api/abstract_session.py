@@ -10,11 +10,12 @@ from trading_api.data_model.position import Position
 
 class Session(ABC):
 
+    def get_market_data(self, market_code) -> MarketData:
+        raise NotImplementedError
+
     def get_positions(self) -> List[Position]:
         raise NotImplementedError
 
-    def get_market_data(self, market_code) -> MarketData:
-        raise NotImplementedError
 
     def update_market_data(self) -> None:
         raise NotImplementedError

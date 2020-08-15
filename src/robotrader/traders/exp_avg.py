@@ -16,7 +16,7 @@ class ExpAvgTrader(RoboTrader):
         self.price_avg_5 = ExpAvg(beta=self._beta_days(5), fn=price)
         self.momentum_short = ExpAvg(beta=self._beta_days(2.5), fn=(ExpAvg(beta=self._beta_days(0.5), fn=Momentum(price, steps_per_day))))
         self.momentum_mid = ExpAvg(beta=self._beta_days(6), fn=(ExpAvg(beta=self._beta_days(0.5), fn=Momentum(price, steps_per_day))))
-        self.momentum = ExpAvg(beta=self._beta_days(20), fn=(ExpAvg(beta=self._beta_days(0.5), fn=Momentum(price, steps_per_day))))
+        self.momentum = ExpAvg(beta=self._beta_days(20), fn=Momentum(price, steps_per_day))
 
         self.features = {
             "day_dev": self.day_dev,
@@ -47,10 +47,10 @@ class ExpAvgTrader(RoboTrader):
 
     @property
     def true_value(self):
-        return self.price_avg_30.value \
-               + 5 * self.momentum.value \
-               + 5 * self.momentum_mid.value \
-               - 3 * self.momentum_short.value
+        return self.price_avg_5.value \
+               + 15 * self.momentum.value \
+               + 25 * self.momentum_mid.value \
+               - 2 * self.momentum_short.value
 
     @property
     def delta(self):

@@ -120,24 +120,29 @@ class RoboTrader:
             return abs(position.amount) * (self.bounds.high(position.market_data.market_code) - position.price)
 
     def _risk(self):
+        """Amount of worst-case loss due to all positions. """
         return sum([self._pos_risk(p) for p in self.sess.get_positions()])
 
     def _free_money(self):
+        """Free money - available money now minus worst case losses. """
         return self.sess.get_acc_details().available - self._risk()
 
     def max_long_amount(self):
+        """Maximum amount of volatility to be bought without risk of forced pos closures. """
 
         data = self.sess.get_market_data(self.market)
         risk_per_unit = max(1, data.ask - self.bounds.low(self.market))
         return self._free_money() / risk_per_unit
 
     def max_short_amount(self):
+        """Maximum amount of volatility to be shorted without risk of forced position closures. """
 
         data = self.sess.get_market_data(self.market)
         risk_per_unit = max(1, self.bounds.high(self.market) - data.bid)
         return self._free_money() / risk_per_unit
 
     def market_data(self, market_code = None):
+        """Get market data for target market code. Defaults to volatility. """
         market_code = market_code or self.market
         return self.sess.get_market_data(market_code)
 

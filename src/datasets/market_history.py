@@ -8,24 +8,9 @@ from typing import Dict, Iterator, Tuple
 from loguru import logger
 
 import markets
+from datasets.resolutions import Resolutions
 from trading_api.ig.ig_session import IgSession
 from config import data_folder
-
-
-class Resolutions:
-    SECOND = "SECOND"
-
-    MINUTE_30 = "MINUTE_30"
-    MINUTE_5 = "MINUTE_5"
-    MINUTE = "MINUTE"
-
-    HOUR = "HOUR"
-    HOUR_2 = "HOUR_2"
-
-    DAY = "DAY"
-
-    __all__ = [SECOND, MINUTE, MINUTE_5, MINUTE_30, HOUR, HOUR_2, DAY]
-
 
 _synth_market_id = markets.MarketId(code=None, name="synthetic_data")
 
@@ -43,6 +28,7 @@ class MarketHistory:
 
         assert resolution in Resolutions.__all__
 
+        os.makedirs(os.path.join(data_folder, resolution), exist_ok=True)
         self.csv_path = os.path.join(data_folder, resolution, f"{market.name}.csv")
         self.market = market
         self._data: Dict[datetime, Tuple[float, float, float]] = {}
@@ -108,8 +94,10 @@ class MarketHistory:
         """ Dump the data to a local csv file.
 
         Symmetrical with `from_csv` method. """
+
         if self._dirty_bit:
             self.compute_start_end_step()
+
         with open(self.csv_path, "w") as f:
             writer = csv.writer(f, delimiter=",")
             for k, (low, high, delta) in self._data.items():

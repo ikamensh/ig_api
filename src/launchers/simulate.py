@@ -8,6 +8,7 @@ from bokeh.plotting import figure, show
 from loguru import logger
 
 import markets
+from robotrader.traders.smart_short import SmartShort
 from trading_api.sim.sim_session import SimSession, SimServer
 from datasets.synthetic.fade_over import fadeover_4_years
 from datasets.market_history import MarketHistory
@@ -50,11 +51,38 @@ def _get_position(s: SimServer) -> int:
         result += s.account.assets()[markets.vix.code]
     return result
 
+
 def _get_net_worth(s: SimServer) -> float:
     return s.account.balance + s.account.profit()
 
 
-def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualize=False, **kwargs) -> float:
+def _record_vis_data(rt, server, values):
+    values["price"].append(price(rt.market_data()))
+    values["net_worth"].append(_get_net_worth(server))
+    pos_list = values["position"]
+    pos_list.append(_get_position(server))
+    if len(pos_list) > 1:
+        values["pos_change"].append(pos_list[-1] - pos_list[-2])
+    else:
+        values["pos_change"].append(pos_list[-1])
+    for k, f in rt.features.items():
+        values[k].append(f.value)
+    for k, v in rt.debug_info().items():
+        values[f"debug_{k}"].append(v)
+
+
+def _make_sim_session(START_BALANCE, dataset):
+    keys = list(dataset.keys())
+    start_date = keys[len(keys) // 3]
+    history = dataset.slice(end=start_date)
+    future = dataset.slice(start=start_date)
+    server = SimServer(balance=START_BALANCE, history=[future])
+    sess = SimSession(server)
+    return history, server, sess
+
+
+def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory = None, visualize=False,
+             **kwargs) -> float:
     """Run a single simulation of how a trading bot would perform on given dataset.
 
     First third of the dataset is used as history to bring features to speed,
@@ -65,13 +93,7 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualiz
     dataset = dataset or fadeover_4_years()
     dataset.market = markets.vix
 
-    keys = list(dataset.keys())
-    start_date = keys[len(keys) // 3]
-    history = dataset.slice(end=start_date)
-    future = dataset.slice(start=start_date)
-
-    server = SimServer(balance=START_BALANCE, history=[future])
-    sess = SimSession(server)
+    history, server, sess = _make_sim_session(START_BALANCE, dataset)
 
     rt: RoboTrader = rt_cls(sess, dataset.market.code, dataset.steps_per_day, **kwargs)
     rt.warm_up(history)
@@ -80,30 +102,14 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualiz
     timestep = timedelta(days=1).total_seconds()
     while server._cur_time < dataset.end:
         rt.step()
+        acc = server.account
         logger.info(
-            f"At {server._cur_time} - "
-            f"Account: "
-            f"{server.account.balance + server.account.profit():.2f} {len(server.account.positions)}",
+            f"At {server._cur_time} - account: {acc.balance + acc.profit():.2f} {len(acc.positions)}",
         )
         server.step(timestep)
 
         if visualize:
-            values["price"].append(price(rt.market_data()))
-            values["net_worth"].append(_get_net_worth(server))
-            pos_list = values["position"]
-            pos_list.append( _get_position(server) )
-            if len(pos_list) > 1:
-                values["pos_change"].append(pos_list[-1] - pos_list[-2])
-            else:
-                values["pos_change"].append(pos_list[-1])
-
-            for k, f in rt.features.items():
-                values[k].append(f.value)
-
-
-            for k, v in rt.debug_info().items():
-                values[f"debug_{k}"].append(v)
-
+            _record_vis_data(rt, server, values)
 
     for p in list(server.account.positions):
         server.account.close(p)
@@ -113,9 +119,11 @@ def simulate(rt_cls: ClassVar[RoboTrader], dataset: MarketHistory=None, visualiz
 
     return (server.account.balance - START_BALANCE) / START_BALANCE
 
+
 if __name__ == "__main__":
     import os
-    log_name = "sim.log"
+
+    log_name = "logs/_sim.log"
     folder = os.path.dirname(__file__)
 
     try:
@@ -125,4 +133,4 @@ if __name__ == "__main__":
 
     logger.remove()
     logger.add(log_name)
-    simulate(ExpAvgTrader, dataset=random_slice(2), visualize=True)
+    simulate(SmartShort, dataset=random_slice(2), visualize=True)

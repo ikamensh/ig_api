@@ -1,4 +1,6 @@
-from datasets.historical import get_ig_vix_ds
+"""Evaluate a trading algorithm on real data from last year on EU and US volatility. """
+
+from datasets.historical import ig_vix, ig_vix_eu
 from robotrader.traders.evopot import EvoPotTrader
 from launchers.simulate import simulate
 
@@ -23,4 +25,5 @@ params.append([20.97210379005471, 99.34813573109325, -0.3107023844583493, 0.1426
 
 
 for p in params:
-    print(simulate(EvoPotTrader, get_ig_vix_ds(), params=p))
+    print(simulate(EvoPotTrader, dataset=ig_vix, params=p))
+    print(simulate(EvoPotTrader, dataset=ig_vix_eu, params=p))

@@ -1,3 +1,5 @@
+"""Launch evolutionary algorithm to search for parameters of a trading algorithm. """
+
 import collections
 import random
 from typing import List

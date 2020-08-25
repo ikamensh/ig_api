@@ -39,7 +39,7 @@ class BoundsEstimate:
 
 
 VIX_MIN_PRICE = 10
-VIX_HIGH_PRICE = 110
+VIX_HIGH_PRICE = 75
 
 class RoboTrader:
     """Abstract class for trading bot."""

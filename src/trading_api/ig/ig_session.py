@@ -19,6 +19,8 @@ from trading_api.exceptions import (
 from trading_api.data_model.snapshot import Snapshot
 from loguru import logger
 
+from trading_api.ig import price_history_limitation
+
 _demo_url = "https://demo-api.ig.com/gateway/deal/"
 
 
@@ -224,6 +226,14 @@ class IgSession(Session):
             payload.update({"max": n_points})
 
         else:
+            now = datetime.now()
+            limit = now - price_history_limitation.limit[resolution]
+
+            if end < limit:
+                logger.info(f"Latest date with available data is {limit}.")
+                return
+
+            start = max(start, limit)
             start = start.isoformat()
             end = end.isoformat()
             payload.update({"from": start, "to": end})

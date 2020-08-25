@@ -5,7 +5,8 @@ import time
 from loguru import logger
 
 import markets
-from datasets.market_history import MarketHistory, Resolutions
+from datasets.market_history import MarketHistory
+from datasets.resolutions import Resolutions
 from trading_api.ig.ig_session import IgSession
 from robotrader.traders.exp_avg import ExpAvgTrader
 from resources.credentials import account_id, key, password

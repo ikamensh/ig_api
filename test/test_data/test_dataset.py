@@ -1,7 +1,8 @@
 import pytest
 
 import markets
-from datasets.market_history import MarketHistory, Resolutions
+from datasets.market_history import MarketHistory
+from datasets.resolutions import Resolutions
 import datetime
 
 

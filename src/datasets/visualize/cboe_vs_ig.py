@@ -5,7 +5,8 @@ Visualize comparison of official CBOE price data for .vix vs IG.com price data.
 from typing import Tuple, List
 
 import markets
-from datasets.market_history import MarketHistory, Resolutions
+from datasets.market_history import MarketHistory
+from datasets.resolutions import Resolutions
 from datasets.historical import add_averaging
 
 

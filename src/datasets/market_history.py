@@ -106,16 +106,14 @@ class MarketHistory:
 
     def update(self, sess: IgSession, start = None, end = None):
         """ Use session to update data to the latest available on the platform. """
-
         start = start or self.end
         end = end or datetime.now()
 
-        if datetime.now() - self.end > timedelta(minutes=15):
-            for t, low, high, delta in sess.price_history(
-                self.market.code, self.resolution, start=start, end=end
-            ):
-                self._data[t] = low, high, delta
-            self.compute_start_end_step()
+        for t, low, high, delta in sess.price_history(
+            self.market.code, self.resolution, start=start, end=end
+        ):
+            self._data[t] = low, high, delta
+        self.compute_start_end_step()
 
     def slice(self, start: datetime = None, end: datetime = None) -> "MarketHistory":
         """ Discard all records outside of the slice window defined by start and end. """

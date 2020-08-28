@@ -24,5 +24,9 @@ from datasets.resolutions import Resolutions as res
 default = lambda: timedelta(days=329, hours=23)
 limit = defaultdict(default)
 limit.update(
-    {res.SECOND: timedelta(days=3, hours=23), res.MINUTE: timedelta(days=39, hours=23),}
+    {
+        res.SECOND: timedelta(days=3, hours=23),
+        res.MINUTE: timedelta(days=39, hours=23),
+        res.MINUTE_10: timedelta(days=179, hours=23),
+    }
 )

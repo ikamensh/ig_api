@@ -4,20 +4,24 @@ from trading_api.ig.ig_session import IgSession
 import pytest
 
 demo_account_id = "ikamen_demo"
-demo_key = "ab3e4a55c5f40b911bbf045d43846f7ba70103bc"
+def keygen():
+    yield "ab3e4a55c5f40b911bbf045d43846f7ba70103bc"
 demo_password = "BoringPassword123"
 
 def test_login():
-    sess = IgSession(demo_account_id, demo_key, demo_password)
+    sess = IgSession(demo_account_id, keygen(), demo_password)
     assert sess._headers["x-security-token"]
 
 
 def test_login_bad_password():
     with pytest.raises(LoginError):
-        sess = IgSession(demo_account_id, demo_key, "WrongPassword")
+        sess = IgSession(demo_account_id, keygen(), "WrongPassword")
 
 def test_login_bad_key():
+    def keygen():
+        yield "WrongKey"
+
     with pytest.raises(LoginError):
-        sess = IgSession(demo_account_id, "WrongKey", demo_password)
+        sess = IgSession(demo_account_id, keygen(), demo_password)
 
 

@@ -1,11 +1,25 @@
 account_id = "ikamen_demo"
-key = "ab3e4a55c5f40b911bbf045d43846f7ba70103bc"
 password = "BoringPassword123"
 
-
-extra_keys = [
-    "2f1f3c536e2ca6db2633284fe22f4ba2a60a3322",
-    "e40a5b5f4b47ed7c9edc3c805a5ae0e28901426b",
-    "10cc8ba94d758ca99177def74c5d8165cce5cc6a"
+_keys = [
+    "10cc8ba94d758ca99177def74c5d8165cce5cc6a",
+    "5a0ae6e97573a5b27586a95a43a393b7158dab2f",
+    "13871d51e1e485f8c7dfb5348b97ce73c207f0c8",
+    "991d1d1b4a8d00b53b33d79aafcc6ce8818125f3",
+    "e675ba307758825c2e21b0654adfe98f478adb5a",
+    "c017a6f63398a30b7a65db34a5f872cdc0f8e643",
+    "6f9238a915312181ef7b1d6e32948e2a5eae87f6",
+    "8778dd90a3ae8d351f18b0682b5120919e544faa",
+    "ae7fd725aeded23573e2025c405633bd91725136",
+    "21fdcf4e68fc9d42518571643821e3138e1333fe",
+    "dbd620973f36d46b149095f75be7844df7981a49",
+    "a1dfa3ac62d48dbf82dc2ad892096ab72133f3cb",
+    "e98292e9ec2a6db236fa44617a26c789beb37b52",
+    "d4a1506797140043f81ae55e046902ea3666b51d",
+    "df9d866521c499c62312bab139aeade24b523536",
 ]
+
+def gen_keys():
+    yield from _keys
+
 

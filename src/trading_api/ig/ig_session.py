@@ -5,6 +5,7 @@ import requests
 import contextlib
 from typing import List, Generator, Tuple, Dict
 
+from resources.credentials import gen_keys
 from trading_api.abstract_session import Session
 from trading_api.data_model.acc_detail import AccountDetails
 from trading_api.data_model.market_data import MarketData
@@ -14,7 +15,7 @@ from trading_api.exceptions import (
     LoginError,
     MarketClosedException,
     CantOpenPosition,
-    MarketNotFoundError, OrderNotFoundError,
+    MarketNotFoundError, OrderNotFoundError, QuotaError,
 )
 from trading_api.data_model.snapshot import Snapshot
 from loguru import logger
@@ -28,12 +29,16 @@ class IgSession(Session):
 
     UPDATE_FREQ = timedelta(minutes=3)
 
-    def __init__(self, identifier, key, password, demo=True):
+    def __init__(self, identifier, keys_gen, password, demo=True):
         self._master_url = _demo_url if demo else None
-
-        self._headers = {"X-IG-API-KEY": key}
+        self._gen_keys = keys_gen
+        self._headers = {}
+        self._next_key()
         self._login(identifier, password)
         self._latest_prices: Dict[str, MarketData] = {}
+
+    def _next_key(self):
+        self._headers["X-IG-API-KEY"] = next(self._gen_keys)
 
     def get_orders(self) -> List[Order]:
         """Get all working orders as a list. """
@@ -239,9 +244,19 @@ class IgSession(Session):
             payload.update({"from": start, "to": end})
 
         with self._use_version(3):
-            r = requests.get(
-                url=prices_url + market, headers=self._headers, params=payload
-            )
+            def request_retry_allowance():
+                r = requests.get(
+                    url=prices_url + market, headers=self._headers, params=payload
+                )
+                while r.text == '{"errorCode":"error.public-api.exceeded-account-historical-data-allowance"}':
+                    logger.debug(f"Exceeded  allowance for key {self._headers['X-IG-API-KEY']}.")
+                    self._next_key()
+                    r = requests.get(
+                        url=prices_url + market, headers=self._headers, params=payload
+                    )
+                return r
+
+            r = request_retry_allowance()
             assert r.status_code == 200, (r.status_code, r.text)
 
             n_pages = r.json()["metadata"]["pageData"]["totalPages"]
@@ -249,9 +264,7 @@ class IgSession(Session):
 
             for page in range(1, n_pages + 1):
                 payload["pageNumber"] = page
-                r = requests.get(
-                    url=prices_url + market, headers=self._headers, params=payload
-                )
+                r = request_retry_allowance()
                 assert r.status_code == 200, (r.status_code, r.text)
 
                 reply = r.json()

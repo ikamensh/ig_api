@@ -25,4 +25,5 @@ _VIX_EU = "CC.D.VSTOXX.UNC.IP"
 vix = MarketId(_VIX, "vix")
 vix_eu = MarketId(_VIX_EU, "vix_eu")
 us500 = MarketId(_US500, "us500")
+gold = MarketId(_GOLD, "gold")
 cboe_vix = MarketId(None, "vix_cboe")

@@ -27,3 +27,7 @@ class MarketNotFoundError(Exception):
 
 class OrderNotFoundError(Exception):
     pass
+
+
+class QuotaError(Exception):
+    pass

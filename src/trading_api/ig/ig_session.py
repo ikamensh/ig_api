@@ -15,7 +15,9 @@ from trading_api.exceptions import (
     LoginError,
     MarketClosedException,
     CantOpenPosition,
-    MarketNotFoundError, OrderNotFoundError, QuotaError,
+    MarketNotFoundError,
+    OrderNotFoundError,
+    QuotaError,
 )
 from trading_api.data_model.snapshot import Snapshot
 from loguru import logger
@@ -77,11 +79,13 @@ class IgSession(Session):
 
         delete_order_url = self._master_url + f"workingorders/otc/{order.deal_id}"
 
-
         with self._use_version(2), self._use_method("DELETE"):
             r = requests.delete(url=delete_order_url, json={}, headers=self._headers)
 
-        if 'errorCode' in r.json() and  r.json()['errorCode'] == 'error.service.delete.working.order.not.found':
+        if (
+            "errorCode" in r.json()
+            and r.json()["errorCode"] == "error.service.delete.working.order.not.found"
+        ):
             raise OrderNotFoundError(f"Order is not found on the server: {order}")
         assert r.status_code == 200, r.json()
 
@@ -214,7 +218,12 @@ class IgSession(Session):
         return matches[0]
 
     def price_history(
-        self, market: str, resolution: str, start: datetime = None, end: datetime = None, n_points: int = None
+        self,
+        market: str,
+        resolution: str,
+        start: datetime = None,
+        end: datetime = None,
+        n_points: int = None,
     ) -> Generator[Tuple[datetime, float, float, float], None, None]:
         """ Allows iteration over historical price data.
 
@@ -244,12 +253,18 @@ class IgSession(Session):
             payload.update({"from": start, "to": end})
 
         with self._use_version(3):
+
             def request_retry_allowance():
                 r = requests.get(
                     url=prices_url + market, headers=self._headers, params=payload
                 )
-                while r.text == '{"errorCode":"error.public-api.exceeded-account-historical-data-allowance"}':
-                    logger.debug(f"Exceeded  allowance for key {self._headers['X-IG-API-KEY']}.")
+                while (
+                    r.text
+                    == '{"errorCode":"error.public-api.exceeded-account-historical-data-allowance"}'
+                ):
+                    logger.debug(
+                        f"Exceeded  allowance for key {self._headers['X-IG-API-KEY']}."
+                    )
                     self._next_key()
                     r = requests.get(
                         url=prices_url + market, headers=self._headers, params=payload
@@ -294,6 +309,30 @@ class IgSession(Session):
                 print(
                     f"Used allowance: {init_allowance - rem_allowance}, remaining: {rem_allowance}"
                 )
+
+    def sentiment(self, market_id: str) -> float:
+        """Get sentiment of a market on IG.
+
+        Returns x, the fraction of customers holding long positions.
+        Short positions can be found as 1 - x.
+        """
+
+        sentiment_url = self._master_url + f"clientsentiment/{market_id}"
+
+        r = requests.get(url=sentiment_url, headers=self._headers)
+        if r.status_code != 200:
+            raise LoginError(f"Failed to login: {r.text}")
+
+        if (
+            r.json()["longPositionPercentage"]
+            == r.json()["shortPositionPercentage"]
+            == "0.0"
+        ):
+            raise MarketNotFoundError(
+                f"Market id '{market_id}' is not valid. Use 'market details' API to find the market id."
+            )
+
+        return float(r.json()["longPositionPercentage"])/100
 
     def _login(self, identifier, password):
         login_url = self._master_url + "session"

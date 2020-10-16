@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-import markets
+from ig_api import markets
 
 
 def test_hit_limit_long(acc, price_data):

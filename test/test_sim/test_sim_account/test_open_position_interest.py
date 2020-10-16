@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-import markets
+from ig_api import markets
 
 
 def test_holding_long_interest(acc):

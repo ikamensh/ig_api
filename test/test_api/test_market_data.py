@@ -1,8 +1,8 @@
 import pytest
 
-import markets
-from trading_api.data_model.snapshot import Snapshot
-from trading_api.exceptions import MarketNotFoundError
+from ig_api import markets
+from ig_api.data_model.snapshot import Snapshot
+from ig_api.exceptions import MarketNotFoundError
 
 
 def test_gets_data(ig_session):

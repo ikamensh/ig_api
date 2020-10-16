@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import pytest
 
-import markets
+from ig_api import markets
 
 @pytest.mark.parametrize("amount", [-50, 50])
 def test_cycle_negative(amount, acc):

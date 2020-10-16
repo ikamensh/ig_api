@@ -1,8 +1,8 @@
 from datetime import timedelta
 
-from trading_api.sim.sim_session import SimServer
-from datasets.historical import ig_vix, ig_vix_eu
-import markets
+from ig_api.sim.sim_session import SimServer
+from ig_api.datasets.historical import ig_vix, ig_vix_eu
+from ig_api import markets
 
 def test_start_time():
     """Both markets have valid data at start time. """

@@ -4,9 +4,9 @@ add flag ` -m "not slow" ` to deselect slow tests.
 
 import pytest
 
-import markets
+from ig_api import markets
 
-from trading_api.sim._sim_market_data import SimMarket
+from ig_api.sim._sim_market_data import SimMarket
 
 
 class TestMarketData(SimMarket):

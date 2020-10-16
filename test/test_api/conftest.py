@@ -2,9 +2,9 @@ from datetime import datetime
 
 import pytest
 
-from trading_api.ig.ig_session import IgSession
-from trading_api.sim.sim_session import SimServer, SimSession
-from datasets.historical import ig_vix_eu, ig_vix
+from ig_api.ig_session import IgSession
+from ig_api.sim.sim_session import SimServer, SimSession
+from ig_api.datasets.historical import ig_vix_eu, ig_vix
 
 demo_account_id = "ikamen_demo"
 _keys = [

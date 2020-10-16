@@ -1,8 +1,8 @@
 import types
 import datetime
 
-import markets
-from datasets.resolutions import Resolutions
+from ig_api import markets
+from ig_api.datasets.resolutions import Resolutions
 
 
 def test_price_history(sess):

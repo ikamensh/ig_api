@@ -1,8 +1,8 @@
 import pytest
 
-import markets
-from datasets.market_history import MarketHistory
-from datasets.resolutions import Resolutions
+from ig_api import markets
+from ig_api.datasets.market_history import MarketHistory
+from ig_api.datasets.resolutions import Resolutions
 import datetime
 
 

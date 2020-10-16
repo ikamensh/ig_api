@@ -1,4 +1,4 @@
-from datasets.historical import cboe_vix, ig_vix, ig_vix_eu
+from ig_api.datasets.historical import cboe_vix, ig_vix, ig_vix_eu
 
 def test_cboe():
     assert len(cboe_vix) > 100

@@ -1,6 +1,6 @@
 import pytest
 
-import markets
+from ig_api import markets
 
 
 @pytest.mark.parametrize("amount", [-50, 50])

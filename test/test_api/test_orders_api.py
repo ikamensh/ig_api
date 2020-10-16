@@ -1,8 +1,8 @@
 import pytest
 
-import markets
-from trading_api.data_model.order import Order
-from trading_api.exceptions import MarketClosedException, OrderNotFoundError
+from ig_api import markets
+from ig_api.data_model.order import Order
+from ig_api.exceptions import MarketClosedException, OrderNotFoundError
 
 
 def test_get_orders(sess):

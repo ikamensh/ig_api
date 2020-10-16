@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 
 from setuptools import setup, find_packages
@@ -6,7 +5,7 @@ from setuptools import setup, find_packages
 _DIR = Path(__file__).parent
 
 
-version = "0.1"
+version = "0.4"
 
 
 def get_requirements():
@@ -16,7 +15,7 @@ def get_requirements():
 
 setup(
     name="ig_api",
-    packages=find_packages("./src"),
+    packages=find_packages("src"),
     package_dir={"": "src"},
     version=version,
     description="API for using ig.com trading; also a set of tools for local simulation.",

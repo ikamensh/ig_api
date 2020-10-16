@@ -1,8 +1,6 @@
-import pytest
+from ig_api.sim.sim_session import SimSession
 
-from trading_api.sim.sim_session import SimSession
-
-import markets
+from ig_api import markets
 
 def test_cycle_costs(server):
     s = SimSession(server)

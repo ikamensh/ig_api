@@ -2,9 +2,9 @@ import datetime
 
 import pytest
 
-from trading_api.sim._sim_account import SimAccount
-from trading_api.sim.sim_session import SimServer
-from datasets.historical import ig_vix_eu, ig_vix
+from ig_api.sim._sim_account import SimAccount
+from ig_api.sim.sim_session import SimServer
+from ig_api.datasets.historical import ig_vix_eu, ig_vix
 
 
 @pytest.fixture()

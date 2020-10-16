@@ -1,5 +1,5 @@
-from datasets.synthetic.fade_over import fadeover_4_years, fadeover_1_year
-from datasets.synthetic.random_slice import random_slice
+from ig_api.datasets.synthetic.fade_over import fadeover_4_years, fadeover_1_year
+from ig_api.datasets.synthetic.random_slice import random_slice
 
 
 def test_default_slice():

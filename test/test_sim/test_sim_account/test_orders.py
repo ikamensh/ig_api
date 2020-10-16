@@ -1,7 +1,7 @@
 from datetime import timedelta
 
-import markets
-from trading_api.sim._sim_account import SimAccount
+from ig_api import markets
+from ig_api.sim._sim_account import SimAccount
 
 
 def test_long_order_converts(acc, price_data):

@@ -1,5 +1,5 @@
-from trading_api.exceptions import LoginError
-from trading_api.ig.ig_session import IgSession
+from ig_api.exceptions import LoginError
+from ig_api.ig_session import IgSession
 
 import pytest
 

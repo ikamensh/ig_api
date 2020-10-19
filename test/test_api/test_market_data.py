@@ -6,7 +6,7 @@ from ig_api.exceptions import MarketNotFoundError
 
 
 def test_gets_data(ig_session):
-    snap, margin_req = ig_session._get_market_data(markets._VIX)
+    snap, margin_req = ig_session.market(markets._VIX)
     assert isinstance(snap, Snapshot)
 
 

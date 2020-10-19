@@ -1,8 +1,8 @@
 import pytest
 
 
-def test_sentiment(sess):
-    long = sess.sentiment("US500")
+def test_sentiment(ig_session):
+    long = ig_session.sentiment("US500")
     assert long > 0
 
 

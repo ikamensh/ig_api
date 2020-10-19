@@ -1,103 +1,109 @@
 {
-  "instrument": {
-    "epic": "CC.D.VIX.UME.IP",
-    "expiry": "-",
-    "name": "Volatility Index (EUR1 Contract)",
-    "forceOpenAllowed": true,
-    "stopsLimitsAllowed": true,
-    "lotSize": 1.0,
-    "unit": "CONTRACTS",
-    "type": "COMMODITIES",
-    "controlledRiskAllowed": true,
-    "streamingPricesAvailable": true,
-    "marketId": "VOLIN",
-    "currencies": [
-      {
-        "code": "E.",
-        "name": "EUR",
-        "symbol": "E",
-        "baseExchangeRate": 1.0,
-        "exchangeRate": 0.9,
-        "isDefault": true
-      }
-    ],
-    "marginDepositBands": [
-      {
-        "min": 0,
-        "max": 60765,
-        "margin": 20
-      },
-      {
-        "min": 60765,
-        "max": 121530,
-        "margin": 20
-      },
-      {
-        "min": 121530,
-        "max": 182295,
-        "margin": 25
-      },
-      {
-        "min": 182295,
-        "max": null,
-        "margin": 30
-      }
-    ],
-    "margin": 20.0,
-    "slippageFactor": {
-      "unit": "pct",
-      "value": 50.0
+    "instrument": {
+        "epic": "EZ.D.BYTGREY.Month2.IP",
+        "expiry": "DEC-21",
+        "name": "ByteDance (TikTok) IPO Market Cap (US$Bn)",
+        "forceOpenAllowed": true,
+        "stopsLimitsAllowed": true,
+        "lotSize": 10.0,
+        "unit": "CONTRACTS",
+        "type": "SHARES",
+        "controlledRiskAllowed": true,
+        "streamingPricesAvailable": true,
+        "marketId": "BYTGREY-US",
+        "currencies": [{
+            "code": "USD",
+            "symbol": "$",
+            "baseExchangeRate": 1.1784205,
+            "exchangeRate": 0.66,
+            "isDefault": false
+        }],
+        "sprintMarketsMinimumExpiryTime": null,
+        "sprintMarketsMaximumExpiryTime": null,
+        "marginDepositBands": [{
+            "min": 0,
+            "max": 55,
+            "margin": 25,
+            "currency": "USD"
+        }, {
+            "min": 55,
+            "max": 99.99,
+            "margin": 40,
+            "currency": "USD"
+        }, {
+            "min": 99.99,
+            "max": 110,
+            "margin": 60,
+            "currency": "USD"
+        }, {
+            "min": 110,
+            "max": null,
+            "margin": 60,
+            "currency": "USD"
+        }],
+        "marginFactor": 25,
+        "marginFactorUnit": "PERCENTAGE",
+        "slippageFactor": {
+            "unit": "pct",
+            "value": 100.0
+        },
+        "limitedRiskPremium": {
+            "value": 1,
+            "unit": "POINTS"
+        },
+        "openingHours": null,
+        "expiryDetails": {
+            "lastDealingDate": "2021-12-31T23:59",
+            "settlementInfo": "Settles basis the market capitalisation of ByteDance at the official close of the primary exchange on the 1st day of unconditional trading excluding any outstanding and optional shares. \nFinal valuation will be converted at the exchange rate of 7.83HKD per USD.\nAll OPEN trades will be voided if there is no floatation by 31st Dec 2021."
+        },
+        "rolloverDetails": {
+            "lastRolloverTime": "2021-12-31T23:59"
+        },
+        "newsCode": ".NDX",
+        "chartCode": null,
+        "country": "US",
+        "valueOfOnePip": "10.00",
+        "onePipMeans": "0",
+        "contractSize": "10",
+        "specialInfo": ["DEFAULT KNOCK OUT LEVEL DISTANCE", "MAX KNOCK OUT LEVEL DISTANCE"]
     },
-    "openingHours": null,
-    "expiryDetails": null,
-    "rolloverDetails": null,
-    "newsCode": ".VIX",
-    "chartCode": null,
-    "country": "US",
-    "valueOfOnePip": "1.00",
-    "onePipMeans": "1 Index Point",
-    "contractSize": "1",
-    "specialInfo": [
-      "DEFAULT KNOCK OUT LEVEL DISTANCE",
-      "MAX KNOCK OUT LEVEL DISTANCE"
-    ]
-  },
-  "dealingRules": {
-    "minStepDistance": {
-      "unit": "POINTS",
-      "value": 10.0
+    "dealingRules": {
+        "minStepDistance": {
+            "unit": "POINTS",
+            "value": 1.0E10
+        },
+        "minDealSize": {
+            "unit": "POINTS",
+            "value": 1.0
+        },
+        "minControlledRiskStopDistance": {
+            "unit": "POINTS",
+            "value": 2.0
+        },
+        "minNormalStopOrLimitDistance": {
+            "unit": "POINTS",
+            "value": 0.1
+        },
+        "maxStopOrLimitDistance": {
+            "unit": "PERCENTAGE",
+            "value": 50.0
+        },
+        "marketOrderPreference": "NOT_AVAILABLE",
+        "trailingStopsPreference": "NOT_AVAILABLE"
     },
-    "minDealSize": {
-      "unit": "POINTS",
-      "value": 1.0
-    },
-    "minControlledRiskStopDistance": {
-      "unit": "POINTS",
-      "value": 1.0
-    },
-    "minNormalStopOrLimitDistance": {
-      "unit": "POINTS",
-      "value": 0.2
-    },
-    "maxStopOrLimitDistance": {
-      "unit": "PERCENTAGE",
-      "value": 1000.0
-    },
-    "marketOrderPreference": "AVAILABLE_DEFAULT_OFF"
-  },
-  "snapshot": {
-    "marketStatus": "TRADEABLE",
-    "netChange": -0.77,
-    "percentageChange": -2.35,
-    "updateTime": "11:35:03",
-    "delayTime": 0,
-    "bid": 31.89,
-    "offer": 32.05,
-    "high": 32.93,
-    "low": 31.61,
-    "binaryOdds": null,
-    "decimalPlacesFactor": 2,
-    "scalingFactor": 1,
-    "controlledRiskExtraSpread": 1.5
-  }
+    "snapshot": {
+        "marketStatus": "TRADEABLE",
+        "netChange": 0,
+        "percentageChange": 0,
+        "updateTime": "23:00:00",
+        "delayTime": 0,
+        "bid": null,
+        "offer": null,
+        "high": 125.00,
+        "low": 117.00,
+        "binaryOdds": null,
+        "decimalPlacesFactor": 2,
+        "scalingFactor": 1,
+        "controlledRiskExtraSpread": 11
+    }
 }

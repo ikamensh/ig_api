@@ -7,6 +7,7 @@ from typing import List, Generator, Tuple, Dict
 
 from ig_api.abstract_session import Session
 from ig_api.data_model.acc_detail import AccountDetails
+from ig_api.data_model.instrument import Instrument
 from ig_api.data_model.market_data import MarketData
 from ig_api.data_model.order import Order
 from ig_api.data_model.position import Position
@@ -150,8 +151,8 @@ class IgSession(Session):
 
     def get_market_data(self, market_code: str) -> MarketData:
         if not market_code in self._latest_prices:
-            snap, margin_req = self._get_market_data(market_code)
-            price_data = MarketData.from_snapshot(snap, market_code, margin_req)
+            snap, instrument = self.market(market_code)
+            price_data = MarketData.from_snapshot(snap, market_code, instrument.margin)
             self._latest_prices[market_code] = price_data
 
         return self._latest_prices[market_code]
@@ -160,7 +161,7 @@ class IgSession(Session):
         now = datetime.now()
         for md in self._latest_prices.values():
             if now - md.time > self.UPDATE_FREQ:
-                snap, margin_req = self._get_market_data(md.market_code)
+                snap, instrument = self.market(md.market_code)
                 md.update(snap)
                 logger.debug(f"Updating market data: {md}.")
 
@@ -358,7 +359,7 @@ class IgSession(Session):
         yield
         del self._headers["_method"]
 
-    def _get_market_data(self, market_code: str) -> Tuple[Snapshot, float]:
+    def market(self, market_code: str) -> Tuple[Snapshot, Instrument]:
         markets_url = self._master_url + "markets/"
 
         with self._use_version(3):
@@ -370,14 +371,36 @@ class IgSession(Session):
         assert r.status_code == 200, r.text
         reply = r.json()
         snap = Snapshot(reply["snapshot"])
-        instrument_el = reply["instrument"]
-        dealing_rules = reply["dealingRules"]
+        instrument = Instrument(reply["instrument"])
+        # dealing_rules = reply["dealingRules"]
 
-        assert market_code == instrument_el["epic"]
-        assert instrument_el["marginFactorUnit"] == "PERCENTAGE"
-        margin_req = float(instrument_el["marginFactor"]) / 100
+        assert market_code == instrument.epic
 
-        return snap, margin_req
+        return snap, instrument
+
+    def market_navigation(self, hierarch_id=None) -> Tuple[List[int], List[str]]:
+        """Get a list of hierarch_ids and list of epics under navigation node.
+
+        For navigation root, leave hierarch_id as None."""
+
+        nav_url = self._master_url + "marketnavigation"
+        if hierarch_id is not None:
+            nav_url += f"/{hierarch_id}"
+
+        r = requests.get(url=nav_url, headers=self._headers)
+        nodes = r.json()["nodes"]
+        h_ids = []
+        if nodes is not None:
+            for el in nodes:
+                h_ids.append(el["id"])
+
+        markets = r.json()["markets"]
+        epics = []
+        if markets is not None:
+            for el in markets:
+                epics.append(el["epic"])
+
+        return h_ids, epics
 
     def _open_position(self, market, amount) -> str:
         otc_url = self._master_url + "positions/otc/"

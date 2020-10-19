@@ -252,25 +252,7 @@ class IgSession(Session):
             payload.update({"from": start, "to": end})
 
         with self._use_version(3):
-
-            def request_retry_allowance():
-                r = requests.get(
-                    url=prices_url + market, headers=self._headers, params=payload
-                )
-                while (
-                    r.text
-                    == '{"errorCode":"error.public-api.exceeded-account-historical-data-allowance"}'
-                ):
-                    logger.debug(
-                        f"Exceeded  allowance for key {self._headers['X-IG-API-KEY']}."
-                    )
-                    self._next_key()
-                    r = requests.get(
-                        url=prices_url + market, headers=self._headers, params=payload
-                    )
-                return r
-
-            r = request_retry_allowance()
+            r = self._request_retry_allowance(requests.get, url=prices_url + market, headers=self._headers, params=payload)
             assert r.status_code == 200, (r.status_code, r.text)
 
             n_pages = r.json()["metadata"]["pageData"]["totalPages"]
@@ -278,7 +260,7 @@ class IgSession(Session):
 
             for page in range(1, n_pages + 1):
                 payload["pageNumber"] = page
-                r = request_retry_allowance()
+                r = self._request_retry_allowance(requests.get, url=prices_url + market, headers=self._headers, params=payload)
                 assert r.status_code == 200, (r.status_code, r.text)
 
                 reply = r.json()
@@ -318,7 +300,7 @@ class IgSession(Session):
 
         sentiment_url = self._master_url + f"clientsentiment/{market_id}"
 
-        r = requests.get(url=sentiment_url, headers=self._headers)
+        r = self._request_retry_allowance(requests.get, url=sentiment_url, headers=self._headers)
         if r.status_code != 200:
             raise LoginError(f"Failed to login: {r.text}")
 
@@ -388,6 +370,8 @@ class IgSession(Session):
             nav_url += f"/{hierarch_id}"
 
         r = requests.get(url=nav_url, headers=self._headers)
+        assert r.status_code == 200, r.text
+
         nodes = r.json()["nodes"]
         h_ids = []
         if nodes is not None:
@@ -479,3 +463,16 @@ class IgSession(Session):
         reply = r.json()
         status, reason = reply["dealStatus"], reply["reason"]
         return reason, reply, status
+
+    def _request_retry_allowance(self, callable, *args, **kwargs):
+        r = callable(*args, **kwargs)
+        while (
+                r.text
+                == '{"errorCode":"error.public-api.exceeded-account-historical-data-allowance"}'
+        ):
+            logger.debug(
+                f"Exceeded allowance for key {self._headers['X-IG-API-KEY']}."
+            )
+            self._next_key()
+            r = callable(*args, **kwargs)
+        return r

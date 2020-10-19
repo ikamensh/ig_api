@@ -27,7 +27,6 @@ _demo_url = "https://demo-api.ig.com/gateway/deal/"
 
 
 class IgSession(Session):
-
     UPDATE_FREQ = timedelta(minutes=3)
 
     def __init__(self, identifier, keys_gen, password, demo=True):
@@ -252,7 +251,12 @@ class IgSession(Session):
             payload.update({"from": start, "to": end})
 
         with self._use_version(3):
-            r = self._request_retry_allowance(requests.get, url=prices_url + market, headers=self._headers, params=payload)
+            r = self._request_retry_allowance(
+                requests.get,
+                url=prices_url + market,
+                headers=self._headers,
+                params=payload,
+            )
             assert r.status_code == 200, (r.status_code, r.text)
 
             n_pages = r.json()["metadata"]["pageData"]["totalPages"]
@@ -260,7 +264,12 @@ class IgSession(Session):
 
             for page in range(1, n_pages + 1):
                 payload["pageNumber"] = page
-                r = self._request_retry_allowance(requests.get, url=prices_url + market, headers=self._headers, params=payload)
+                r = self._request_retry_allowance(
+                    requests.get,
+                    url=prices_url + market,
+                    headers=self._headers,
+                    params=payload,
+                )
                 assert r.status_code == 200, (r.status_code, r.text)
 
                 reply = r.json()
@@ -300,9 +309,10 @@ class IgSession(Session):
 
         sentiment_url = self._master_url + f"clientsentiment/{market_id}"
 
-        r = self._request_retry_allowance(requests.get, url=sentiment_url, headers=self._headers)
-        if r.status_code != 200:
-            raise LoginError(f"Failed to login: {r.text}")
+        r = self._request_retry_allowance(
+            requests.get, url=sentiment_url, headers=self._headers
+        )
+        assert r.status_code == 200, (r.status_code, r.text)
 
         if (
             r.json()["longPositionPercentage"]
@@ -313,7 +323,34 @@ class IgSession(Session):
                 f"Market id '{market_id}' is not valid. Use 'market details' API to find the market id."
             )
 
-        return float(r.json()["longPositionPercentage"])/100
+        return r.json()["longPositionPercentage"] / 100
+
+    def sentiments(self, market_ids: List[str]) -> Dict[str, float]:
+        assert isinstance(market_ids, List)
+        assert market_ids
+
+        sentiment_url = self._master_url + f"clientsentiment"
+        params = {"marketIds": ','.join(market_ids)}
+
+        r = self._request_retry_allowance(
+            requests.get, url=sentiment_url, headers=self._headers, params=params
+        )
+        assert r.status_code == 200, (r.status_code, r.text)
+
+        result = {}
+        for el in r.json()["clientSentiments"]:
+            mkt_id = el["marketId"]
+            if (
+                    (long := el["longPositionPercentage"])
+                    == el["shortPositionPercentage"]
+                    == 0.0
+            ):
+                raise MarketNotFoundError(
+                    f"Market id '{mkt_id}' is not valid. Use 'market details' API to find the market id."
+                )
+            result[mkt_id] = long
+
+        return result
 
     def _login(self, identifier, password):
         login_url = self._master_url + "session"
@@ -322,7 +359,9 @@ class IgSession(Session):
             "password": password,
             "encryptedPassword": None,
         }
-        r = requests.post(url=login_url, headers=self._headers, json=body)
+        r = self._request_retry_allowance(
+            requests.post, url=login_url, headers=self._headers, json=body
+        )
         if r.status_code != 200:
             raise LoginError(f"Failed to login: {r.text}")
         self._headers["cst"] = r.headers["cst"]
@@ -466,13 +505,8 @@ class IgSession(Session):
 
     def _request_retry_allowance(self, callable, *args, **kwargs):
         r = callable(*args, **kwargs)
-        while (
-                r.text
-                == '{"errorCode":"error.public-api.exceeded-account-historical-data-allowance"}'
-        ):
-            logger.debug(
-                f"Exceeded allowance for key {self._headers['X-IG-API-KEY']}."
-            )
+        while all(x in r.text for x in ["errorCode", "exceeded", "allowance"]):
+            logger.debug(f"Exceeded allowance for key {self._headers['X-IG-API-KEY']}.")
             self._next_key()
             r = callable(*args, **kwargs)
         return r

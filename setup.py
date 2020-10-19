@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 _DIR = Path(__file__).parent
 
-version = "0.8"
+version = "0.11"
 
 
 def get_requirements():

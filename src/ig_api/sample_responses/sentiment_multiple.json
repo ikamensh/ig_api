@@ -1,0 +1,11 @@
+{
+    "clientSentiments": [{
+        "marketId": "FT100",
+        "longPositionPercentage": 71.0,
+        "shortPositionPercentage": 29.0
+    }, {
+        "marketId": "EURUSD",
+        "longPositionPercentage": 69.0,
+        "shortPositionPercentage": 31.0
+    }]
+}
